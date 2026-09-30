@@ -1,0 +1,170 @@
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------ *
+ * Design tokens — mirrored from design_template (light + dark).
+ * Raw values live on :root and are overridden for the dark theme;
+ * Tailwind utilities reference them through the @theme inline block.
+ * ------------------------------------------------------------------ */
+:root {
+  --font-body: 'Barlow', system-ui, sans-serif;
+  --font-heading: 'Barlow Condensed', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --color-bg: #f2f2f3;
+  --color-surface: #e9e9ea;
+  --color-text: #1d1f20;
+  --color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
+
+  --color-accent: #5980a6;
+  --color-accent-100: #eef6ff;
+  --color-accent-200: #d6ebff;
+  --color-accent-300: #b5d9fd;
+  --color-accent-400: #94bce3;
+  --color-accent-500: #749dc4;
+  --color-accent-600: #597ea3;
+  --color-accent-700: #416180;
+  --color-accent-800: #2c455d;
+  --color-accent-900: #1d2d3d;
+
+  --color-neutral-100: #f5f5f8;
+  --color-neutral-200: #e7e7ea;
+  --color-neutral-300: #d4d4d7;
+  --color-neutral-400: #b7b7ba;
+  --color-neutral-500: #98989b;
+  --color-neutral-600: #7a7a7d;
+  --color-neutral-700: #5d5d60;
+  --color-neutral-800: #424244;
+  --color-neutral-900: #2b2b2d;
+
+  --shadow-md: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 4px 14px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 14px 36px rgba(0, 0, 0, 0.16);
+
+  /* Status palette (light). */
+  --st-ok: oklch(0.62 0.13 150);
+  --st-ok-bg: oklch(0.94 0.04 150);
+  --st-ok-ink: oklch(0.4 0.1 150);
+  --st-part: oklch(0.76 0.14 80);
+  --st-part-bg: oklch(0.95 0.05 85);
+  --st-part-ink: oklch(0.47 0.1 70);
+  --st-fail: oklch(0.6 0.18 27);
+  --st-fail-bg: oklch(0.94 0.035 25);
+  --st-fail-ink: oklch(0.46 0.15 27);
+  --st-none: #a4a4a7;
+  --st-none-bg: #e4e4e7;
+  --st-none-ink: #5d5d60;
+  --st-sus: oklch(0.68 0.17 50);
+  --st-sus-bg: oklch(0.95 0.045 60);
+  --st-sus-ink: oklch(0.5 0.14 45);
+}
+
+:root[data-theme='dark'] {
+  --color-bg: #141618;
+  --color-surface: #1b1e21;
+  --color-text: #e3e4e6;
+  --color-divider: color-mix(in srgb, #e3e4e6 14%, transparent);
+
+  --color-accent: #7fa3c7;
+  --color-accent-100: #1b2835;
+  --color-accent-200: #253a4f;
+  --color-accent-300: #35516e;
+  --color-accent-400: #4f7196;
+  --color-accent-500: #749dc4;
+  --color-accent-600: #94bce3;
+  --color-accent-700: #a9cdf2;
+  --color-accent-800: #d6ebff;
+  --color-accent-900: #eef6ff;
+
+  --color-neutral-100: #232527;
+  --color-neutral-200: #2f3134;
+  --color-neutral-300: #45474a;
+  --color-neutral-400: #606265;
+  --color-neutral-500: #85878a;
+  --color-neutral-600: #a2a4a7;
+  --color-neutral-700: #bdbfc2;
+  --color-neutral-800: #dcdee0;
+  --color-neutral-900: #f2f3f5;
+
+  --shadow-md: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 4px 14px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 14px 36px rgba(0, 0, 0, 0.6);
+
+  --st-ok: oklch(0.7 0.13 150);
+  --st-ok-bg: oklch(0.3 0.05 150);
+  --st-ok-ink: oklch(0.85 0.1 150);
+  --st-part: oklch(0.78 0.14 80);
+  --st-part-bg: oklch(0.32 0.05 80);
+  --st-part-ink: oklch(0.87 0.1 85);
+  --st-fail: oklch(0.66 0.17 27);
+  --st-fail-bg: oklch(0.3 0.06 25);
+  --st-fail-ink: oklch(0.84 0.09 25);
+  --st-none: #6f7174;
+  --st-none-bg: #2f3134;
+  --st-none-ink: #c4c6c9;
+  --st-sus: oklch(0.72 0.16 50);
+  --st-sus-bg: oklch(0.32 0.06 55);
+  --st-sus-ink: oklch(0.86 0.1 55);
+}
+
+/* Expose tokens to Tailwind utilities (bg-canvas, text-ink, text-brand-700, …). */
+@theme inline {
+  --font-sans: var(--font-body);
+  --font-head: var(--font-heading);
+  --font-mono: var(--font-mono);
+
+  --color-canvas: var(--color-bg);
+  --color-panel: var(--color-surface);
+  --color-ink: var(--color-text);
+  --color-line: var(--color-divider);
+
+  --color-brand: var(--color-accent);
+  --color-brand-100: var(--color-accent-100);
+  --color-brand-200: var(--color-accent-200);
+  --color-brand-300: var(--color-accent-300);
+  --color-brand-400: var(--color-accent-400);
+  --color-brand-500: var(--color-accent-500);
+  --color-brand-600: var(--color-accent-600);
+  --color-brand-700: var(--color-accent-700);
+  --color-brand-800: var(--color-accent-800);
+  --color-brand-900: var(--color-accent-900);
+
+  --color-mut-100: var(--color-neutral-100);
+  --color-mut-200: var(--color-neutral-200);
+  --color-mut-300: var(--color-neutral-300);
+  --color-mut-400: var(--color-neutral-400);
+  --color-mut-500: var(--color-neutral-500);
+  --color-mut-600: var(--color-neutral-600);
+  --color-mut-700: var(--color-neutral-700);
+  --color-mut-800: var(--color-neutral-800);
+  --color-mut-900: var(--color-neutral-900);
+
+  --color-ok: var(--st-ok);
+  --color-ok-bg: var(--st-ok-bg);
+  --color-ok-ink: var(--st-ok-ink);
+  --color-part: var(--st-part);
+  --color-part-bg: var(--st-part-bg);
+  --color-part-ink: var(--st-part-ink);
+  --color-fail: var(--st-fail);
+  --color-fail-bg: var(--st-fail-bg);
+  --color-fail-ink: var(--st-fail-ink);
+  --color-none: var(--st-none);
+  --color-none-bg: var(--st-none-bg);
+  --color-none-ink: var(--st-none-ink);
+  --color-sus: var(--st-sus);
+  --color-sus-bg: var(--st-sus-bg);
+  --color-sus-ink: var(--st-sus-ink);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
