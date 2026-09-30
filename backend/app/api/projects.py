@@ -7,12 +7,11 @@ import uuid
 from fastapi import APIRouter, HTTPException
 
 from app.core.deps import SessionDep
-from app.repositories import evidence as evidence_repo
 from app.repositories import projects as project_repo
 from app.schemas.evidence import EvidenceRead
 from app.schemas.item import ItemRead
 from app.schemas.project import ItemTypeRead, ProjectNode, ProjectRead
-from app.services import item_service, project_service
+from app.services import evidence_service, item_service, project_service
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -43,17 +42,4 @@ def list_items(project_id: uuid.UUID, session: SessionDep) -> list[ItemRead]:
 
 @router.get("/{project_id}/evidence", response_model=list[EvidenceRead])
 def list_evidence(project_id: uuid.UUID, session: SessionDep) -> list[EvidenceRead]:
-    counts = evidence_repo.evidence_link_counts(session, project_id)
-    return [
-        EvidenceRead(
-            id=e.id,
-            project_id=e.project_id,
-            kind=e.kind,
-            fqn=e.fqn,
-            name=e.name,
-            in_git=e.in_git,
-            in_regression=e.in_regression,
-            link_count=counts.get(e.id, 0),
-        )
-        for e in evidence_repo.list_evidence(session, project_id)
-    ]
+    return evidence_service.list_catalog(session, project_id)

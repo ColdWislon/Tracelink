@@ -21,6 +21,15 @@ class EvidenceRead(BaseModel):
     in_git: bool
     in_regression: bool
     link_count: int = 0
+    # Latest-run metrics (populated per kind) and derived state.
+    passed: int | None = None
+    failed: int | None = None
+    total: int | None = None
+    hits: int | None = None
+    goal: int | None = None
+    fired: int | None = None
+    ran: bool = False
+    satisfied: bool = False
 
 
 # --- regression ingestion payload (documented via JSON Schema) ---------------

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './client';
 import type {
   EarsReport,
+  Evidence,
   Item,
   ItemCreate,
   ItemDetail,
@@ -18,6 +19,7 @@ export const queryKeys = {
   items: (projectId: string) => ['items', projectId] as const,
   item: (itemId: string) => ['item', itemId] as const,
   itemTypes: (projectId: string) => ['item-types', projectId] as const,
+  evidence: (projectId: string) => ['evidence', projectId] as const,
 };
 
 export function useProjects() {
@@ -51,10 +53,21 @@ export function useItem(itemId: string | undefined) {
   });
 }
 
+export function useEvidence(projectId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.evidence(projectId ?? ''),
+    queryFn: () => api.get<Evidence[]>(`/api/projects/${projectId}/evidence`),
+    enabled: Boolean(projectId),
+  });
+}
+
 function useInvalidateProject(projectId: string | undefined) {
   const client = useQueryClient();
   return () => {
-    if (projectId) client.invalidateQueries({ queryKey: queryKeys.items(projectId) });
+    if (projectId) {
+      client.invalidateQueries({ queryKey: queryKeys.items(projectId) });
+      client.invalidateQueries({ queryKey: queryKeys.evidence(projectId) });
+    }
     client.invalidateQueries({ queryKey: queryKeys.projects });
     // Any open drawer reflects link/status changes.
     client.invalidateQueries({ queryKey: ['item'] });

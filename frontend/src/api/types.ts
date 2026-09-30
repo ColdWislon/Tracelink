@@ -131,6 +131,25 @@ export interface ItemUpdate {
   message?: string;
 }
 
+export interface Evidence {
+  id: string;
+  project_id: string;
+  kind: EvidenceKind;
+  fqn: string;
+  name: string;
+  in_git: boolean;
+  in_regression: boolean;
+  link_count: number;
+  passed: number | null;
+  failed: number | null;
+  total: number | null;
+  hits: number | null;
+  goal: number | null;
+  fired: number | null;
+  ran: boolean;
+  satisfied: boolean;
+}
+
 export interface LinkCreate {
   link_type: LinkType;
   upstream_item_id: string;

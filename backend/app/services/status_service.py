@@ -7,11 +7,10 @@ import uuid
 
 from sqlalchemy.orm import Session
 
-from app.models import EvidenceResult, RegressionRun
+from app.models import EvidenceResult
 from app.models.enums import ItemBaseKind, LinkType, VerificationStatus
 from app.repositories import evidence as evidence_repo
 from app.repositories import items as item_repo
-from app.repositories import projects as project_repo
 from app.services.domain.status import (
     EvidenceOutcome,
     EvidenceState,
@@ -37,22 +36,6 @@ def _outcome(result: EvidenceResult) -> EvidenceOutcome:
 _NOT_RUN = EvidenceState(ran=False, satisfied=False, failing=False)
 
 
-def _latest_run_in_hierarchy(session: Session, project_id: uuid.UUID) -> RegressionRun | None:
-    """Latest run for the project, falling back to ancestor (SoC) runs.
-
-    A regression run is often recorded at the SoC level but covers evidence that
-    belongs to child IP projects, so status for an IP walks up to find it.
-    """
-    current: uuid.UUID | None = project_id
-    while current is not None:
-        run = evidence_repo.latest_run(session, current)
-        if run is not None:
-            return run
-        project = project_repo.get_project(session, current)
-        current = project.parent_id if project else None
-    return None
-
-
 def compute_statuses(
     session: Session, project_id: uuid.UUID
 ) -> dict[uuid.UUID, VerificationStatus]:
@@ -61,7 +44,7 @@ def compute_statuses(
     item_ids = [i.id for i in items]
     links = item_repo.links_for_items(session, item_ids)
 
-    run = _latest_run_in_hierarchy(session, project_id)
+    run = evidence_repo.latest_run_in_hierarchy(session, project_id)
     results = evidence_repo.results_for_run(session, run.id) if run else {}
 
     # Map each verification item to its linked evidence ids, and each requirement

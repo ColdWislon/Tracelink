@@ -84,6 +84,23 @@ def test_orphan_evidence_present(seeded: Session) -> None:
     assert "a_pcie_rx_credit_ovf" in fqns
 
 
+def test_evidence_catalog_has_metrics(seeded: Session) -> None:
+    from app.services import evidence_service
+
+    pcie = get_project_by_key(seeded, "pcie")
+    assert pcie is not None
+    catalog = {e.fqn: e for e in evidence_service.list_catalog(seeded, pcie.id)}
+
+    linkup = catalog["pcie_gen4_linkup_test"]
+    assert (linkup.passed, linkup.total) == (50, 50)
+    assert linkup.satisfied is True
+    assert linkup.link_count >= 1
+
+    orphan = catalog["pcie_ecrc_multi_tlp_test"]
+    assert orphan.link_count == 0
+    assert orphan.ran is False
+
+
 def test_aurora_hierarchy(seeded: Session) -> None:
     aurora = get_project_by_key(seeded, "aurora")
     assert aurora is not None
