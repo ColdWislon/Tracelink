@@ -143,14 +143,17 @@ export function GridView({ requirements, onUpdate, onOpenItem }: Props) {
           return (
             <div className="flex flex-wrap gap-1">
               {links.map((l) => (
-                <span
+                <button
                   key={l.link_id}
-                  className="border-line inline-flex items-center gap-1 border px-1.5 font-mono text-[11px]"
+                  type="button"
+                  title={l.title}
+                  onClick={() => onOpenItem(l.id)}
+                  className="border-line hover:bg-panel inline-flex items-center gap-1 border px-1.5 font-mono text-[11px]"
                   style={l.suspect ? { borderColor: SUSPECT_STYLE.color } : undefined}
                 >
                   {l.human_id}
                   {l.suspect && <AlertTriangle size={11} style={{ color: SUSPECT_STYLE.color }} />}
-                </span>
+                </button>
               ))}
             </div>
           );

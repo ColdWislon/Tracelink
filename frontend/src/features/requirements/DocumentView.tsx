@@ -26,11 +26,16 @@ const WORKFLOW_LABEL: Record<string, string> = {
   approved: 'Approved',
 };
 
-function DownstreamChip({ ref: link }: { ref: LinkRef }) {
+function DownstreamChip({ link, onOpen }: { link: LinkRef; onOpen: (id: string) => void }) {
+  const clickable = link.target === 'item';
+  const onClick = clickable ? () => onOpen(link.id) : undefined;
   if (link.suspect) {
     return (
-      <span
-        className="inline-flex items-center gap-1 border px-1.5 py-px font-mono text-[11px]"
+      <button
+        type="button"
+        onClick={onClick}
+        title={link.title}
+        className="inline-flex items-center gap-1 border px-1.5 py-px font-mono text-[11px] hover:brightness-95"
         style={{
           borderColor: SUSPECT_STYLE.color,
           color: SUSPECT_STYLE.ink,
@@ -38,13 +43,18 @@ function DownstreamChip({ ref: link }: { ref: LinkRef }) {
         }}
       >
         <AlertTriangle size={11} /> {link.human_id} · suspect
-      </span>
+      </button>
     );
   }
   return (
-    <span className="border-line text-ink border px-1.5 py-px font-mono text-[11px]">
+    <button
+      type="button"
+      onClick={onClick}
+      title={link.title}
+      className="border-line text-ink hover:bg-panel border px-1.5 py-px font-mono text-[11px]"
+    >
       ↳ {link.human_id}
-    </span>
+    </button>
   );
 }
 
@@ -164,7 +174,7 @@ function RequirementBlock({
         {item.downstream.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {item.downstream.map((link) => (
-              <DownstreamChip key={link.link_id} ref={link} />
+              <DownstreamChip key={link.link_id} link={link} onOpen={onOpenItem} />
             ))}
           </div>
         )}
