@@ -13,6 +13,7 @@ interface Props {
   requirementType: ItemType | undefined;
   onUpdate: (id: string, patch: ItemUpdate) => void;
   onCreate: (payload: ItemCreate) => void;
+  onOpenItem: (id: string) => void;
   projectId: string;
 }
 
@@ -47,9 +48,11 @@ function DownstreamChip({ ref: link }: { ref: LinkRef }) {
 function RequirementBlock({
   item,
   onUpdate,
+  onOpenItem,
 }: {
   item: Item;
   onUpdate: (id: string, patch: ItemUpdate) => void;
+  onOpenItem: (id: string) => void;
 }) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [title, setTitle] = useState(item.title);
@@ -70,7 +73,13 @@ function RequirementBlock({
       </div>
       <div className="min-w-0">
         <div className="mb-1 flex flex-wrap items-baseline gap-2">
-          <span className="text-brand-700 font-mono text-[11.5px]">{item.human_id}</span>
+          <button
+            type="button"
+            onClick={() => onOpenItem(item.id)}
+            className="text-brand-700 font-mono text-[11.5px] hover:underline"
+          >
+            {item.human_id}
+          </button>
           {editingTitle ? (
             <input
               autoFocus
@@ -224,6 +233,7 @@ export function DocumentView({
   requirementType,
   onUpdate,
   onCreate,
+  onOpenItem,
   projectId,
 }: Props) {
   const counts = useMemo(() => {
@@ -266,7 +276,7 @@ export function DocumentView({
 
       <div className="divide-line/60 divide-y">
         {requirements.map((item) => (
-          <RequirementBlock key={item.id} item={item} onUpdate={onUpdate} />
+          <RequirementBlock key={item.id} item={item} onUpdate={onUpdate} onOpenItem={onOpenItem} />
         ))}
       </div>
 

@@ -130,3 +130,19 @@ export interface ItemUpdate {
   workflow_status?: WorkflowStatus;
   message?: string;
 }
+
+export interface LinkCreate {
+  link_type: LinkType;
+  upstream_item_id: string;
+  downstream_item_id?: string;
+  downstream_evidence_id?: string;
+}
+
+export interface LinkCreated {
+  link_id: string;
+  link_type: LinkType;
+  upstream_item_id: string;
+  downstream_item_id: string | null;
+  downstream_evidence_id: string | null;
+  suspect: boolean;
+}

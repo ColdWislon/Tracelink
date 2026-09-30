@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ProjectNode } from '@/api/types';
 import { useProjects } from '@/api/hooks';
 import { applyTheme, getInitialTheme, type Theme } from '@/lib/theme';
+import { ItemDrawer } from '@/components/drawer/ItemDrawer';
 import { RequirementsView } from '@/features/requirements/RequirementsView';
 
 import { Header } from './Header';
@@ -19,6 +20,7 @@ export function AppShell() {
   const [section, setSection] = useState<Section>('requirements');
   const [view, setView] = useState<View>('document');
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [openItemId, setOpenItemId] = useState<string | undefined>();
 
   const all = useMemo(() => flatten(projects), [projects]);
   const socName = projects[0]?.name ?? 'Tracelink';
@@ -69,7 +71,7 @@ export function AppShell() {
             <span className="font-mono">:8000</span>?
           </div>
         ) : section === 'requirements' ? (
-          <RequirementsView project={project} view={view} />
+          <RequirementsView project={project} view={view} onOpenItem={setOpenItemId} />
         ) : (
           <div className="text-mut-700 p-8">
             <span className="font-head text-ink text-xl">{SECTION_LABELS[section]}</span>
@@ -77,6 +79,12 @@ export function AppShell() {
           </div>
         )}
       </main>
+      <ItemDrawer
+        itemId={openItemId}
+        projectId={selectedProjectId}
+        onClose={() => setOpenItemId(undefined)}
+        onOpenItem={setOpenItemId}
+      />
     </div>
   );
 }

@@ -55,7 +55,7 @@ const items: Item[] = [
 
 describe('GridView', () => {
   it('renders rows, marks orphans, and filters', () => {
-    render(<GridView requirements={items} onUpdate={vi.fn()} />);
+    render(<GridView requirements={items} onUpdate={vi.fn()} onOpenItem={vi.fn()} />);
 
     expect(screen.getByText('REQ-PCIE-001')).toBeInTheDocument();
     expect(screen.getByText('REQ-DMA-011')).toBeInTheDocument();
@@ -71,7 +71,7 @@ describe('GridView', () => {
 
   it('commits an inline priority change', () => {
     const onUpdate = vi.fn();
-    render(<GridView requirements={items} onUpdate={onUpdate} />);
+    render(<GridView requirements={items} onUpdate={onUpdate} onOpenItem={vi.fn()} />);
     const selects = screen.getAllByRole('combobox');
     fireEvent.change(selects[0], { target: { value: 'P3' } });
     expect(onUpdate).toHaveBeenCalledWith(

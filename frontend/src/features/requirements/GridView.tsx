@@ -17,6 +17,7 @@ import { SUSPECT_STYLE } from '@/lib/status';
 interface Props {
   requirements: Item[];
   onUpdate: (id: string, patch: ItemUpdate) => void;
+  onOpenItem: (id: string) => void;
 }
 
 const PRIORITIES = ['P1', 'P2', 'P3'];
@@ -28,7 +29,7 @@ const WORKFLOW_LABEL: Record<string, string> = {
 
 const column = createColumnHelper<Item>();
 
-export function GridView({ requirements, onUpdate }: Props) {
+export function GridView({ requirements, onUpdate, onOpenItem }: Props) {
   const [sorting, setSorting] = useState<SortingState>([{ id: 'human_id', desc: false }]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
@@ -40,7 +41,13 @@ export function GridView({ requirements, onUpdate }: Props) {
       column.accessor('human_id', {
         header: 'ID',
         cell: (ctx) => (
-          <span className="text-brand-700 font-mono text-[12px]">{ctx.getValue()}</span>
+          <button
+            type="button"
+            onClick={() => onOpenItem(ctx.row.original.id)}
+            className="text-brand-700 font-mono text-[12px] hover:underline"
+          >
+            {ctx.getValue()}
+          </button>
         ),
       }),
       column.accessor('title', {
@@ -155,7 +162,7 @@ export function GridView({ requirements, onUpdate }: Props) {
         cell: (ctx) => <StatusBadge status={ctx.row.original.status} />,
       }),
     ],
-    [editingTitle, titleDraft, onUpdate],
+    [editingTitle, titleDraft, onUpdate, onOpenItem],
   );
 
   const table = useReactTable({

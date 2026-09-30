@@ -8,6 +8,8 @@ import type {
   ItemDetail,
   ItemType,
   ItemUpdate,
+  LinkCreate,
+  LinkCreated,
   ProjectNode,
 } from './types';
 
@@ -41,11 +43,21 @@ export function useItemTypes(projectId: string | undefined) {
   });
 }
 
+export function useItem(itemId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.item(itemId ?? ''),
+    queryFn: () => api.get<ItemDetail>(`/api/items/${itemId}`),
+    enabled: Boolean(itemId),
+  });
+}
+
 function useInvalidateProject(projectId: string | undefined) {
   const client = useQueryClient();
   return () => {
     if (projectId) client.invalidateQueries({ queryKey: queryKeys.items(projectId) });
     client.invalidateQueries({ queryKey: queryKeys.projects });
+    // Any open drawer reflects link/status changes.
+    client.invalidateQueries({ queryKey: ['item'] });
   };
 }
 
@@ -62,6 +74,30 @@ export function useUpdateItem(projectId: string | undefined) {
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: ItemUpdate }) =>
       api.patch<ItemDetail>(`/api/items/${id}`, patch),
+    onSuccess: invalidate,
+  });
+}
+
+export function useCreateLink(projectId: string | undefined) {
+  const invalidate = useInvalidateProject(projectId);
+  return useMutation({
+    mutationFn: (payload: LinkCreate) => api.post<LinkCreated>('/api/links', payload),
+    onSuccess: invalidate,
+  });
+}
+
+export function useClearSuspect(projectId: string | undefined) {
+  const invalidate = useInvalidateProject(projectId);
+  return useMutation({
+    mutationFn: (linkId: string) => api.post<LinkCreated>(`/api/links/${linkId}/clear-suspect`, {}),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteLink(projectId: string | undefined) {
+  const invalidate = useInvalidateProject(projectId);
+  return useMutation({
+    mutationFn: (linkId: string) => api.del<void>(`/api/links/${linkId}`),
     onSuccess: invalidate,
   });
 }

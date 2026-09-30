@@ -8,9 +8,11 @@ import { GridView } from './GridView';
 export function RequirementsView({
   project,
   view,
+  onOpenItem,
 }: {
   project: ProjectNode | undefined;
   view: View;
+  onOpenItem: (id: string) => void;
 }) {
   const projectId = project?.id;
   const { data: items = [], isLoading } = useItems(projectId);
@@ -28,7 +30,7 @@ export function RequirementsView({
   const onCreate = (payload: ItemCreate) => createItem.mutate(payload);
 
   if (view === 'grid') {
-    return <GridView requirements={requirements} onUpdate={onUpdate} />;
+    return <GridView requirements={requirements} onUpdate={onUpdate} onOpenItem={onOpenItem} />;
   }
   return (
     <DocumentView
@@ -37,6 +39,7 @@ export function RequirementsView({
       requirementType={requirementType}
       onUpdate={onUpdate}
       onCreate={onCreate}
+      onOpenItem={onOpenItem}
       projectId={project.id}
     />
   );
