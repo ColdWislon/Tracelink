@@ -159,6 +159,33 @@ body,
   height: 100%;
 }
 
+/* TipTap requirement-body editor + EARS underlines. */
+.ears-prose:focus {
+  outline: none;
+}
+.ears-prose p {
+  margin: 0;
+}
+.ears-prose p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--color-neutral-500);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+.ears-err {
+  text-decoration: underline wavy var(--st-fail);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+  cursor: help;
+}
+.ears-warn {
+  text-decoration: underline wavy var(--st-part);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+  cursor: help;
+}
+
 body {
   margin: 0;
   background: var(--color-bg);

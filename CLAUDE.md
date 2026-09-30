@@ -138,12 +138,12 @@ npm run dev        # or: npm run build
 
 - **Phase 0 — Scaffold & infra.** ✅ Repo layout, docker-compose, backend + frontend
   skeletons, tooling green, Alembic + DB up, this file.
-- **Phase 1 — Authoring.** Project/Item CRUD, ItemTypes + attribute templates,
+- **Phase 1 — Authoring.** ✅ Project/Item CRUD, ItemTypes + attribute templates,
   revisions on every save; document view (TipTap: requirement blocks, slash menu,
   inline status badges, EARS underline+tooltip); grid view (TanStack Table: inline
   edit, filter, sort, multi-select); EARS quality checker. Status computation is
   implemented and tested this phase (badges/grid read it from the seeded run).
-  → **Session checkpoint after Phase 1.**
+  → **Session checkpoint after Phase 1 (reached).**
 - **Phase 2 — Linking & traceability.** `@mention` autocomplete creating links;
   evidence-catalog drag & drop onto plan items; item detail drawer
   (Details / Links + suspect / History with diff); traceability matrix with orphan
