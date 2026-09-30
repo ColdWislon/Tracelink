@@ -1,0 +1,91 @@
+"""Verify the seed reproduces the design comp: statuses, suspects, counts."""
+
+from __future__ import annotations
+
+import pytest
+from app import seed as seed_module
+from app.models import Item, Project
+from app.models.enums import VerificationStatus
+from app.repositories.projects import get_project_by_key
+from app.services import item_service, status_service
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+# Expected coverage per requirement/plan item, straight from the comp.
+EXPECTED_STATUS = {
+    "REQ-PCIE-001": VerificationStatus.COVERED,
+    "REQ-PCIE-004": VerificationStatus.PARTIAL,
+    "REQ-PCIE-007": VerificationStatus.COVERED,
+    "REQ-PCIE-012": VerificationStatus.PARTIAL,
+    "REQ-PCIE-015": VerificationStatus.COVERED,
+    "REQ-PCIE-018": VerificationStatus.PARTIAL,
+    "REQ-PCIE-020": VerificationStatus.NOT_RUN,
+    "REQ-DMA-001": VerificationStatus.COVERED,
+    "REQ-DMA-003": VerificationStatus.PARTIAL,
+    "REQ-DMA-006": VerificationStatus.COVERED,
+    "REQ-DMA-009": VerificationStatus.FAILING,
+    "REQ-DMA-011": VerificationStatus.UNCOVERED,
+    "REQ-IRQ-001": VerificationStatus.COVERED,
+    "REQ-IRQ-004": VerificationStatus.COVERED,
+    "REQ-IRQ-007": VerificationStatus.NOT_RUN,
+    "REQ-IRQ-009": VerificationStatus.UNCOVERED,
+    "VP-DMA-010": VerificationStatus.FAILING,
+    "VP-PCIE-024": VerificationStatus.NOT_RUN,
+    "VP-IRQ-008": VerificationStatus.NOT_RUN,
+}
+
+
+@pytest.fixture
+def seeded(db: Session) -> Session:
+    seed_module.seed(db)
+    return db
+
+
+def test_counts(seeded: Session) -> None:
+    reqs = seeded.execute(select(Item).where(Item.human_id.like("REQ-%"))).scalars().all()
+    vps = seeded.execute(select(Item).where(Item.human_id.like("VP-%"))).scalars().all()
+    assert len(reqs) == 16
+    assert len(vps) == 20
+
+
+def test_statuses_match_comp(seeded: Session) -> None:
+    by_human = {i.human_id: i for i in seeded.execute(select(Item)).scalars().all()}
+    # Statuses are computed per IP project; merge the three.
+    statuses: dict[str, VerificationStatus] = {}
+    for key in ("pcie", "dma", "irq"):
+        project = get_project_by_key(seeded, key)
+        assert project is not None
+        computed = status_service.compute_statuses(seeded, project.id)
+        for item_id, status in computed.items():
+            statuses[next(h for h, i in by_human.items() if i.id == item_id)] = status
+
+    for human_id, expected in EXPECTED_STATUS.items():
+        assert statuses[human_id] == expected, human_id
+
+
+def test_suspect_links(seeded: Session) -> None:
+    pcie = get_project_by_key(seeded, "pcie")
+    assert pcie is not None
+    reads = {r.human_id: r for r in item_service.list_item_reads(seeded, pcie.id)}
+
+    req012 = reads["REQ-PCIE-012"]
+    suspect_targets = {ref.human_id for ref in req012.downstream if ref.suspect}
+    assert "VP-PCIE-021" in suspect_targets
+    assert "VP-PCIE-022" not in suspect_targets  # reviewed against current revision
+
+
+def test_orphan_evidence_present(seeded: Session) -> None:
+    from app.repositories import evidence as evidence_repo
+
+    pcie = get_project_by_key(seeded, "pcie")
+    assert pcie is not None
+    fqns = {e.fqn for e in evidence_repo.list_evidence(seeded, pcie.id)}
+    assert "pcie_ltssm_recovery_test" in fqns  # catalog-only orphan
+    assert "a_pcie_rx_credit_ovf" in fqns
+
+
+def test_aurora_hierarchy(seeded: Session) -> None:
+    aurora = get_project_by_key(seeded, "aurora")
+    assert aurora is not None
+    children = seeded.execute(select(Project).where(Project.parent_id == aurora.id)).scalars().all()
+    assert {c.key for c in children} == {"pcie", "dma", "irq"}
