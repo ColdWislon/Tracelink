@@ -11,7 +11,10 @@ import os
 from collections.abc import Iterator
 
 import pytest
+from app.core.db import get_session
+from app.main import app
 from app.models import Base
+from fastapi.testclient import TestClient
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session
 
@@ -42,3 +45,17 @@ def db(engine: Engine) -> Iterator[Session]:
         session.close()
         trans.rollback()
         connection.close()
+
+
+@pytest.fixture
+def client(db: Session) -> Iterator[TestClient]:
+    """A TestClient whose requests use the isolated test session."""
+
+    def _override() -> Iterator[Session]:
+        yield db
+
+    app.dependency_overrides[get_session] = _override
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.clear()

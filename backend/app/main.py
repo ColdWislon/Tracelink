@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
+from app.api.router import api_router
 from app.core.config import settings
 
 
@@ -28,7 +29,7 @@ def create_app() -> FastAPI:
     def health() -> dict[str, str]:
         return {"status": "ok", "version": __version__}
 
-    # Routers are registered in Phase 1.3.
+    app.include_router(api_router)
     return app
 
 
