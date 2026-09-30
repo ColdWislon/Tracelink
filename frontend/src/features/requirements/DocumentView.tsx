@@ -1,18 +1,21 @@
 import { AlertTriangle, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import type { Item, ItemCreate, ItemType, ItemUpdate, LinkRef } from '@/api/types';
+import type { Item, ItemCreate, ItemType, ItemUpdate, LinkCreate, LinkRef } from '@/api/types';
 import { StatusBadge, StatusDot } from '@/components/StatusBadge';
 import { SUSPECT_STYLE } from '@/lib/status';
 
 import { EarsEditor } from './EarsEditor';
+import type { MentionItem } from './MentionList';
 
 interface Props {
   projectName: string;
   requirements: Item[];
+  linkTargets: Item[];
   requirementType: ItemType | undefined;
   onUpdate: (id: string, patch: ItemUpdate) => void;
   onCreate: (payload: ItemCreate) => void;
+  onCreateLink: (payload: LinkCreate) => void;
   onOpenItem: (id: string) => void;
   projectId: string;
 }
@@ -47,16 +50,52 @@ function DownstreamChip({ ref: link }: { ref: LinkRef }) {
 
 function RequirementBlock({
   item,
+  linkTargets,
   onUpdate,
+  onCreateLink,
   onOpenItem,
 }: {
   item: Item;
+  linkTargets: Item[];
   onUpdate: (id: string, patch: ItemUpdate) => void;
+  onCreateLink: (payload: LinkCreate) => void;
   onOpenItem: (id: string) => void;
 }) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [title, setTitle] = useState(item.title);
   const [pattern, setPattern] = useState<string | null>(item.ears_pattern);
+
+  const mentionItems: MentionItem[] = useMemo(
+    () =>
+      linkTargets
+        .filter((t) => t.id !== item.id)
+        .map((t) => ({
+          id: t.id,
+          human_id: t.human_id,
+          title: t.title,
+          base_kind: t.base_kind,
+          status: t.status,
+        })),
+    [linkTargets, item.id],
+  );
+
+  const onMention = (mentioned: MentionItem) => {
+    // Mentioning a plan item verifies this requirement; mentioning a requirement
+    // records a derives_from (this item derives from the mentioned upstream).
+    if (mentioned.base_kind === 'verification_item') {
+      onCreateLink({
+        link_type: 'verified_by',
+        upstream_item_id: item.id,
+        downstream_item_id: mentioned.id,
+      });
+    } else {
+      onCreateLink({
+        link_type: 'derives_from',
+        upstream_item_id: mentioned.id,
+        downstream_item_id: item.id,
+      });
+    }
+  };
 
   const commitTitle = () => {
     setEditingTitle(false);
@@ -117,6 +156,8 @@ function RequirementBlock({
             body={item.body}
             onCommit={(text) => onUpdate(item.id, { body: text })}
             onReport={(report) => setPattern(report.pattern)}
+            mentionItems={mentionItems}
+            onMention={onMention}
           />
         </div>
 
@@ -230,9 +271,11 @@ function AddBlock({
 export function DocumentView({
   projectName,
   requirements,
+  linkTargets,
   requirementType,
   onUpdate,
   onCreate,
+  onCreateLink,
   onOpenItem,
   projectId,
 }: Props) {
@@ -276,7 +319,14 @@ export function DocumentView({
 
       <div className="divide-line/60 divide-y">
         {requirements.map((item) => (
-          <RequirementBlock key={item.id} item={item} onUpdate={onUpdate} onOpenItem={onOpenItem} />
+          <RequirementBlock
+            key={item.id}
+            item={item}
+            linkTargets={linkTargets}
+            onUpdate={onUpdate}
+            onCreateLink={onCreateLink}
+            onOpenItem={onOpenItem}
+          />
         ))}
       </div>
 

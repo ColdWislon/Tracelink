@@ -1,10 +1,12 @@
+import Mention from '@tiptap/extension-mention';
 import Placeholder from '@tiptap/extension-placeholder';
 import Table from '@tiptap/extension-table';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import TableRow from '@tiptap/extension-table-row';
-import { EditorContent, useEditor, type Editor } from '@tiptap/react';
+import { EditorContent, ReactRenderer, useEditor, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import type { SuggestionKeyDownProps, SuggestionProps } from '@tiptap/suggestion';
 import { List, ListOrdered, Table2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -13,11 +15,14 @@ import type { EarsReport } from '@/api/types';
 import { cn } from '@/lib/cn';
 
 import { EarsUnderline, docPlainText, earsPluginKey } from './ears-extension';
+import { MentionList, type MentionItem, type MentionListRef } from './MentionList';
 
 interface Props {
   body: string;
   onCommit: (html: string) => void;
   onReport?: (report: EarsReport) => void;
+  mentionItems?: MentionItem[];
+  onMention?: (item: MentionItem) => void;
 }
 
 const HTML_RE = /^\s*<(p|ul|ol|table|h[1-6]|blockquote)\b/i;
@@ -27,11 +32,26 @@ function toContent(body: string): string {
   return HTML_RE.test(body) ? body : `<p>${escapeHtml(body)}</p>`;
 }
 
-/** A rich TipTap editor (lists + tables) with live EARS underlines, commit-on-blur. */
-export function EarsEditor({ body, onCommit, onReport }: Props) {
+function placePopup(
+  popup: HTMLElement,
+  clientRect: (() => DOMRect | null) | null | undefined,
+): void {
+  const rect = clientRect?.();
+  if (!rect) return;
+  popup.style.left = `${rect.left + window.scrollX}px`;
+  popup.style.top = `${rect.bottom + window.scrollY + 4}px`;
+}
+
+/** A rich TipTap editor (lists + tables + @mentions) with live EARS underlines. */
+export function EarsEditor({ body, onCommit, onReport, mentionItems = [], onMention }: Props) {
   const debounce = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const lastCommitted = useRef(body);
   const [focused, setFocused] = useState(false);
+
+  const mentionItemsRef = useRef(mentionItems);
+  mentionItemsRef.current = mentionItems;
+  const onMentionRef = useRef(onMention);
+  onMentionRef.current = onMention;
 
   const runCheck = (editor: Editor) => {
     const { text } = docPlainText(editor.state.doc);
@@ -50,6 +70,56 @@ export function EarsEditor({ body, onCommit, onReport }: Props) {
       TableHeader,
       TableCell,
       EarsUnderline,
+      Mention.configure({
+        HTMLAttributes: { class: 'mention' },
+        suggestion: {
+          char: '@',
+          items: ({ query }) =>
+            mentionItemsRef.current
+              .filter((i) => `${i.human_id} ${i.title}`.toLowerCase().includes(query.toLowerCase()))
+              .slice(0, 8),
+          command: ({ editor: ed, range, props }) => {
+            const item = props as unknown as MentionItem;
+            ed.chain()
+              .focus()
+              .insertContentAt(range, [
+                { type: 'mention', attrs: { id: item.id, label: item.human_id } },
+                { type: 'text', text: ' ' },
+              ])
+              .run();
+            onMentionRef.current?.(item);
+          },
+          render: () => {
+            let component: ReactRenderer<MentionListRef> | null = null;
+            let popup: HTMLDivElement | null = null;
+            return {
+              onStart: (props: SuggestionProps) => {
+                component = new ReactRenderer(MentionList, { props, editor: props.editor });
+                popup = document.createElement('div');
+                popup.style.position = 'absolute';
+                popup.style.zIndex = '60';
+                document.body.appendChild(popup);
+                popup.appendChild(component.element);
+                placePopup(popup, props.clientRect);
+              },
+              onUpdate: (props: SuggestionProps) => {
+                component?.updateProps(props);
+                placePopup(popup!, props.clientRect);
+              },
+              onKeyDown: (props: SuggestionKeyDownProps) => {
+                if (props.event.key === 'Escape') return true;
+                return component?.ref?.onKeyDown(props) ?? false;
+              },
+              onExit: () => {
+                popup?.remove();
+                component?.destroy();
+                popup = null;
+                component = null;
+              },
+            };
+          },
+        },
+      }),
     ],
     content: toContent(body),
     editorProps: { attributes: { class: 'ears-prose' } },
@@ -68,7 +138,6 @@ export function EarsEditor({ body, onCommit, onReport }: Props) {
     },
   });
 
-  // Initial EARS check so underlines/pattern show without editing.
   useEffect(() => {
     if (editor && body) runCheck(editor);
     // eslint-disable-next-line react-hooks/exhaustive-deps
