@@ -6,6 +6,7 @@ import { applyTheme, getInitialTheme, type Theme } from '@/lib/theme';
 import { ItemDrawer } from '@/components/drawer/ItemDrawer';
 import { PlanView } from '@/features/plan/PlanView';
 import { RequirementsView } from '@/features/requirements/RequirementsView';
+import { TraceView } from '@/features/trace/TraceView';
 
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
@@ -75,6 +76,8 @@ export function AppShell() {
           <RequirementsView project={project} view={view} onOpenItem={setOpenItemId} />
         ) : section === 'plan' ? (
           <PlanView project={project} onOpenItem={setOpenItemId} />
+        ) : section === 'trace' ? (
+          <TraceView project={project} onOpenItem={setOpenItemId} />
         ) : (
           <div className="text-mut-700 p-8">
             <span className="font-head text-ink text-xl">{SECTION_LABELS[section]}</span>

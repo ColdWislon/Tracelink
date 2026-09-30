@@ -144,10 +144,10 @@ npm run dev        # or: npm run build
   edit, filter, sort, multi-select); EARS quality checker. Status computation is
   implemented and tested this phase (badges/grid read it from the seeded run).
   → **Session checkpoint after Phase 1 (reached).**
-- **Phase 2 — Linking & traceability.** `@mention` autocomplete creating links;
-  evidence-catalog drag & drop onto plan items; item detail drawer
-  (Details / Links + suspect / History with diff); traceability matrix with orphan
-  highlighting.
+- **Phase 2 — Linking & traceability.** ✅ Link create/delete/clear-suspect APIs;
+  `@mention` autocomplete creating links; evidence-catalog drag & drop onto plan
+  items (Verification Plan view); item detail drawer (Details / Links + suspect +
+  Clear / History with diff); traceability matrix with orphan highlighting.
 - **Phase 3 — Regression import & status pipeline.** Ingestion endpoint driven by
   `rtrack-push` + Cadence vManager/IMC export. *(Ingestion endpoint, JSON Schema,
   and the CLI are scaffolded earlier; the export is out of scope until here.)*
