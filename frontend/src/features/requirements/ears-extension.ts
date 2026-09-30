@@ -1,7 +1,7 @@
 import { Extension } from '@tiptap/core';
+import type { Node as PMNode } from '@tiptap/pm/model';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
-import type { Node as PMNode } from '@tiptap/pm/model';
 
 import type { EarsFinding } from '@/api/types';
 
@@ -12,36 +12,38 @@ interface EarsState {
   deco: DecorationSet;
 }
 
-/** Map a plain-text character offset to a ProseMirror document position. */
-function offsetToPos(doc: PMNode, offset: number): number {
-  let remaining = offset;
-  let pos = 0;
-  let found = 0;
-  doc.descendants((node, nodePos) => {
-    if (found) return false;
-    if (node.isText) {
-      const len = node.text?.length ?? 0;
-      if (remaining <= len) {
-        pos = nodePos + remaining;
-        found = 1;
-        return false;
+/**
+ * Flatten the document to plain text plus a map from each text-character index to
+ * its ProseMirror position. EARS checks run on this exact text, so finding offsets
+ * map back to decorations correctly even across lists/tables/multiple blocks.
+ */
+export function docPlainText(doc: PMNode): { text: string; map: number[] } {
+  let text = '';
+  const map: number[] = [];
+  doc.descendants((node, pos) => {
+    if (node.isText && node.text) {
+      for (let i = 0; i < node.text.length; i += 1) {
+        text += node.text[i];
+        map.push(pos + i);
       }
-      remaining -= len;
     }
     return true;
   });
-  return found ? pos : doc.content.size;
+  return { text, map };
 }
 
 function buildDecorations(doc: PMNode, findings: EarsFinding[]): DecorationSet {
+  const { map } = docPlainText(doc);
   const decos = findings
-    .filter((f) => f.end > f.start)
-    .map((f) =>
-      Decoration.inline(offsetToPos(doc, f.start), offsetToPos(doc, f.end), {
+    .filter((f) => f.end > f.start && f.start < map.length)
+    .map((f) => {
+      const from = map[f.start];
+      const to = (map[f.end - 1] ?? map[map.length - 1]) + 1;
+      return Decoration.inline(from, to, {
         class: f.severity === 'error' ? 'ears-err' : 'ears-warn',
         title: `${f.code}: ${f.message}`,
-      }),
-    );
+      });
+    });
   return DecorationSet.create(doc, decos);
 }
 
