@@ -1,8 +1,9 @@
-"""Tests for the rtrack-push CLI scaffold (fake-data, dry-run)."""
+"""Tests for the rtrack-push CLI (fake-data + file modes, dry-run)."""
 
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 from cli.rtrack_push.__main__ import main
@@ -24,5 +25,20 @@ def test_dry_run_prints_payload(capsys: pytest.CaptureFixture[str]) -> None:
     assert out["project_key"] == "dma"
 
 
-def test_without_fake_is_not_implemented() -> None:
-    assert main(["--project", "pcie"]) == 2
+def test_requires_a_source_mode() -> None:
+    # Neither --fake nor --file -> argparse errors out.
+    with pytest.raises(SystemExit):
+        main(["--project", "pcie"])
+
+
+def test_file_mode_dry_run(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    payload = {"project_key": "irq", "results": []}
+    path = tmp_path / "run.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    code = main(["--file", str(path), "--dry-run"])
+    assert code == 0
+    assert json.loads(capsys.readouterr().out)["project_key"] == "irq"
+
+
+def test_fake_requires_project() -> None:
+    assert main(["--fake"]) == 2

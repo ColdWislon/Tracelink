@@ -101,6 +101,27 @@ def test_evidence_catalog_has_metrics(seeded: Session) -> None:
     assert orphan.ran is False
 
 
+def test_dashboard_and_runs(seeded: Session) -> None:
+    from app.services import dashboard_service, regression_service
+
+    pcie = get_project_by_key(seeded, "pcie")
+    assert pcie is not None
+
+    dash = dashboard_service.compute(seeded, pcie.id)
+    # PCIe: 7 requirements, 3 covered in the comp.
+    assert dash.requirements.total == 7
+    assert dash.requirements.covered == 3
+    assert dash.covered_pct == round(100 * 3 / 7, 1)
+    assert dash.suspect_links >= 1  # REQ-PCIE-012 -> VP-PCIE-021
+    assert dash.latest_run is not None
+    assert dash.latest_run.external_id == "#1842"
+
+    # Runs are recorded at the SoC level but visible from the IP via the hierarchy.
+    runs = regression_service.list_runs(seeded, pcie.id)
+    assert len(runs) == 1
+    assert runs[0].tests.total > 0
+
+
 def test_aurora_hierarchy(seeded: Session) -> None:
     aurora = get_project_by_key(seeded, "aurora")
     assert aurora is not None

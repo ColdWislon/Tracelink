@@ -74,3 +74,26 @@ class RegressionRunAccepted(BaseModel):
     project_key: str
     result_count: int
     created_evidence: int
+
+
+class KindSummary(BaseModel):
+    total: int = 0
+    satisfied: int = 0
+    partial: int = 0
+    failing: int = 0
+    not_run: int = 0
+
+
+class RegressionRunRead(BaseModel):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    source: str
+    external_id: str | None
+    label: str | None
+    started_at: datetime | None
+    finished_at: datetime | None
+    imported_at: datetime | None
+    result_count: int
+    tests: KindSummary
+    coverpoints: KindSummary
+    assertions: KindSummary

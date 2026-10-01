@@ -6,15 +6,90 @@ seeded run drives statuses and so ``rtrack-push`` has a real target.
 
 from __future__ import annotations
 
+import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
 from app.models import Evidence, EvidenceResult, RegressionRun
+from app.models.enums import EvidenceKind
 from app.repositories import evidence as evidence_repo
 from app.repositories import projects as project_repo
-from app.schemas.evidence import RegressionRunAccepted, RegressionRunIn
+from app.schemas.evidence import (
+    KindSummary,
+    RegressionRunAccepted,
+    RegressionRunIn,
+    RegressionRunRead,
+)
+from app.services.domain.status import EvidenceOutcome, evidence_state
 from app.services.item_service import DomainError
+
+_KIND_FIELD = {
+    EvidenceKind.TEST: "tests",
+    EvidenceKind.COVERPOINT: "coverpoints",
+    EvidenceKind.ASSERTION: "assertions",
+}
+
+
+def _summarize(session: Session, run: RegressionRun) -> RegressionRunRead:
+    results = evidence_repo.results_for_run(session, run.id)
+    buckets = {
+        "tests": KindSummary(),
+        "coverpoints": KindSummary(),
+        "assertions": KindSummary(),
+    }
+    for result in results.values():
+        bucket = buckets[_KIND_FIELD[result.kind]]
+        bucket.total += 1
+        state = evidence_state(
+            EvidenceOutcome(
+                kind=result.kind,
+                passed=result.passed,
+                failed=result.failed,
+                total=result.total,
+                hits=result.hits,
+                goal=result.goal,
+                fired=result.fired,
+            )
+        )
+        if state.failing:
+            bucket.failing += 1
+        elif not state.ran:
+            bucket.not_run += 1
+        elif state.satisfied:
+            bucket.satisfied += 1
+        else:
+            bucket.partial += 1
+    return RegressionRunRead(
+        id=run.id,
+        project_id=run.project_id,
+        source=run.source,
+        external_id=run.external_id,
+        label=run.label,
+        started_at=run.started_at,
+        finished_at=run.finished_at,
+        imported_at=run.imported_at,
+        result_count=len(results),
+        tests=buckets["tests"],
+        coverpoints=buckets["coverpoints"],
+        assertions=buckets["assertions"],
+    )
+
+
+def list_runs(session: Session, project_id: uuid.UUID) -> list[RegressionRunRead]:
+    return [
+        _summarize(session, run) for run in evidence_repo.runs_in_hierarchy(session, project_id)
+    ]
+
+
+def get_run(session: Session, run_id: uuid.UUID) -> RegressionRunRead | None:
+    run = evidence_repo.get_run(session, run_id)
+    return _summarize(session, run) if run else None
+
+
+def latest_run_summary(session: Session, project_id: uuid.UUID) -> RegressionRunRead | None:
+    run = evidence_repo.latest_run_in_hierarchy(session, project_id)
+    return _summarize(session, run) if run else None
 
 
 def ingest_run(session: Session, payload: RegressionRunIn) -> RegressionRunAccepted:

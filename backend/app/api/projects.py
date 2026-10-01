@@ -8,10 +8,17 @@ from fastapi import APIRouter, HTTPException
 
 from app.core.deps import SessionDep
 from app.repositories import projects as project_repo
-from app.schemas.evidence import EvidenceCreate, EvidenceRead
+from app.schemas.dashboard import DashboardRead
+from app.schemas.evidence import EvidenceCreate, EvidenceRead, RegressionRunRead
 from app.schemas.item import ItemRead
 from app.schemas.project import ItemTypeRead, ProjectNode, ProjectRead
-from app.services import evidence_service, item_service, project_service
+from app.services import (
+    dashboard_service,
+    evidence_service,
+    item_service,
+    project_service,
+    regression_service,
+)
 from app.services.item_service import DomainError
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -56,3 +63,13 @@ def create_evidence(
         )
     except DomainError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.get("/{project_id}/runs", response_model=list[RegressionRunRead])
+def list_runs(project_id: uuid.UUID, session: SessionDep) -> list[RegressionRunRead]:
+    return regression_service.list_runs(session, project_id)
+
+
+@router.get("/{project_id}/dashboard", response_model=DashboardRead)
+def dashboard(project_id: uuid.UUID, session: SessionDep) -> DashboardRead:
+    return dashboard_service.compute(session, project_id)

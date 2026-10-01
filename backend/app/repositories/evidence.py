@@ -67,6 +67,34 @@ def latest_run_in_hierarchy(session: Session, project_id: uuid.UUID) -> Regressi
     return None
 
 
+def _hierarchy_ids(session: Session, project_id: uuid.UUID) -> list[uuid.UUID]:
+    ids: list[uuid.UUID] = []
+    current: uuid.UUID | None = project_id
+    while current is not None:
+        ids.append(current)
+        project = session.get(Project, current)
+        current = project.parent_id if project else None
+    return ids
+
+
+def runs_in_hierarchy(session: Session, project_id: uuid.UUID) -> list[RegressionRun]:
+    """All regression runs for the project and its ancestor (SoC) projects, newest first."""
+    ids = _hierarchy_ids(session, project_id)
+    stmt = (
+        select(RegressionRun)
+        .where(RegressionRun.project_id.in_(ids))
+        .order_by(
+            func.coalesce(RegressionRun.finished_at, RegressionRun.imported_at).desc().nulls_last(),
+            RegressionRun.created_at.desc(),
+        )
+    )
+    return list(session.execute(stmt).scalars().all())
+
+
+def get_run(session: Session, run_id: uuid.UUID) -> RegressionRun | None:
+    return session.get(RegressionRun, run_id)
+
+
 def results_for_run(session: Session, run_id: uuid.UUID) -> dict[uuid.UUID, EvidenceResult]:
     stmt = select(EvidenceResult).where(EvidenceResult.run_id == run_id)
     return {r.evidence_id: r for r in session.execute(stmt).scalars().all()}
