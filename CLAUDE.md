@@ -154,7 +154,10 @@ npm run dev        # or: npm run build
   `rtrack-push --fake`/`--file`. *(The real Cadence vManager/IMC export that
   produces the payload stays out of scope — no tooling here; the documented JSON
   payload is the ingestion contract.)*
-- **Phase 4 — Reviews & baselines UI.**
+- **Phase 4 — Reviews & baselines UI.** ✅ Review workflow (request / approve /
+  request-changes / comments) in the drawer Review tab; baselines (snapshot a
+  project subtree's revisions) with a Baselines section and a header baseline
+  selector that shows a read-only frozen banner across views.
 - **Phase 5 — IP reuse & variants UI.**
 - **Phase 6 — AI assistant & Word import.**
 
