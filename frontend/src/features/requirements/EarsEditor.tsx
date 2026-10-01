@@ -23,6 +23,7 @@ interface Props {
   onReport?: (report: EarsReport) => void;
   mentionItems?: MentionItem[];
   onMention?: (item: MentionItem) => void;
+  editable?: boolean;
 }
 
 const HTML_RE = /^\s*<(p|ul|ol|table|h[1-6]|blockquote)\b/i;
@@ -43,7 +44,14 @@ function placePopup(
 }
 
 /** A rich TipTap editor (lists + tables + @mentions) with live EARS underlines. */
-export function EarsEditor({ body, onCommit, onReport, mentionItems = [], onMention }: Props) {
+export function EarsEditor({
+  body,
+  onCommit,
+  onReport,
+  mentionItems = [],
+  onMention,
+  editable = true,
+}: Props) {
   const debounce = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const lastCommitted = useRef(body);
   const [focused, setFocused] = useState(false);
@@ -122,6 +130,7 @@ export function EarsEditor({ body, onCommit, onReport, mentionItems = [], onMent
       }),
     ],
     content: toContent(body),
+    editable,
     editorProps: { attributes: { class: 'ears-prose' } },
     onFocus: () => setFocused(true),
     onUpdate: ({ editor: ed }) => {
@@ -174,7 +183,7 @@ export function EarsEditor({ body, onCommit, onReport, mentionItems = [], onMent
 
   return (
     <div>
-      {focused && (
+      {editable && focused && (
         <div className="mb-1 flex gap-1">
           {toolButton(
             editor.isActive('bulletList'),

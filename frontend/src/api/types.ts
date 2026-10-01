@@ -92,8 +92,61 @@ export interface Item {
   downstream: LinkRef[];
 }
 
+export type ReviewStatus = 'requested' | 'in_review' | 'changes_requested' | 'approved';
+export type ReviewDecision = 'pending' | 'approved' | 'changes_requested';
+
+export interface ReviewAssignment {
+  id: string;
+  reviewer: string;
+  role: string | null;
+  decision: ReviewDecision;
+  decided_at: string | null;
+}
+
+export interface Review {
+  id: string;
+  item_id: string;
+  revision_id: string | null;
+  status: ReviewStatus;
+  requested_by: string | null;
+  created_at: string;
+  assignments: ReviewAssignment[];
+}
+
+export interface Comment {
+  id: string;
+  author: string;
+  body: string;
+  created_at: string;
+}
+
 export interface ItemDetail extends Item {
   revisions: Revision[];
+  review: Review | null;
+  comments: Comment[];
+}
+
+export interface Baseline {
+  id: string;
+  project_id: string;
+  name: string;
+  milestone: string | null;
+  description: string | null;
+  frozen: boolean;
+  created_by: string | null;
+  created_at: string;
+  entry_count: number;
+}
+
+export interface BaselineEntry {
+  item_id: string;
+  human_id: string;
+  title: string;
+  rev_number: number;
+}
+
+export interface BaselineDetail extends Baseline {
+  entries: BaselineEntry[];
 }
 
 export interface EarsFinding {

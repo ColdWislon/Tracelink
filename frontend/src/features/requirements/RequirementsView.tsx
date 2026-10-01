@@ -9,10 +9,12 @@ export function RequirementsView({
   project,
   view,
   onOpenItem,
+  readOnly = false,
 }: {
   project: ProjectNode | undefined;
   view: View;
   onOpenItem: (id: string) => void;
+  readOnly?: boolean;
 }) {
   const projectId = project?.id;
   const { data: items = [], isLoading } = useItems(projectId);
@@ -32,7 +34,14 @@ export function RequirementsView({
   const onCreateLink = (payload: LinkCreate) => createLink.mutate(payload);
 
   if (view === 'grid') {
-    return <GridView requirements={requirements} onUpdate={onUpdate} onOpenItem={onOpenItem} />;
+    return (
+      <GridView
+        requirements={requirements}
+        onUpdate={onUpdate}
+        onOpenItem={onOpenItem}
+        readOnly={readOnly}
+      />
+    );
   }
   return (
     <DocumentView
@@ -45,6 +54,7 @@ export function RequirementsView({
       onCreateLink={onCreateLink}
       onOpenItem={onOpenItem}
       projectId={project.id}
+      readOnly={readOnly}
     />
   );
 }

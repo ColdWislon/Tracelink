@@ -18,6 +18,7 @@ interface Props {
   onCreateLink: (payload: LinkCreate) => void;
   onOpenItem: (id: string) => void;
   projectId: string;
+  readOnly?: boolean;
 }
 
 const WORKFLOW_LABEL: Record<string, string> = {
@@ -64,12 +65,14 @@ function RequirementBlock({
   onUpdate,
   onCreateLink,
   onOpenItem,
+  readOnly = false,
 }: {
   item: Item;
   linkTargets: Item[];
   onUpdate: (id: string, patch: ItemUpdate) => void;
   onCreateLink: (payload: LinkCreate) => void;
   onOpenItem: (id: string) => void;
+  readOnly?: boolean;
 }) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [title, setTitle] = useState(item.title);
@@ -144,6 +147,8 @@ function RequirementBlock({
               }}
               className="border-brand bg-canvas border px-1 text-[14.5px] font-semibold outline-none"
             />
+          ) : readOnly ? (
+            <span className="text-[14.5px] font-semibold">{item.title}</span>
           ) : (
             <button
               type="button"
@@ -164,9 +169,10 @@ function RequirementBlock({
         <div className="ears-body text-[14.5px] leading-relaxed">
           <EarsEditor
             body={item.body}
+            editable={!readOnly}
             onCommit={(text) => onUpdate(item.id, { body: text })}
             onReport={(report) => setPattern(report.pattern)}
-            mentionItems={mentionItems}
+            mentionItems={readOnly ? [] : mentionItems}
             onMention={onMention}
           />
         </div>
@@ -288,6 +294,7 @@ export function DocumentView({
   onCreateLink,
   onOpenItem,
   projectId,
+  readOnly = false,
 }: Props) {
   const counts = useMemo(() => {
     const by = { covered: 0, partial: 0, not_run: 0 } as Record<string, number>;
@@ -336,11 +343,14 @@ export function DocumentView({
             onUpdate={onUpdate}
             onCreateLink={onCreateLink}
             onOpenItem={onOpenItem}
+            readOnly={readOnly}
           />
         ))}
       </div>
 
-      <AddBlock requirementType={requirementType} projectId={projectId} onCreate={onCreate} />
+      {!readOnly && (
+        <AddBlock requirementType={requirementType} projectId={projectId} onCreate={onCreate} />
+      )}
     </div>
   );
 }

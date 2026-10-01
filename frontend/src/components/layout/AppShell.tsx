@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import type { ProjectNode } from '@/api/types';
-import { useProjects, useRuns } from '@/api/hooks';
+import { useBaselines, useProjects, useRuns } from '@/api/hooks';
 import { applyTheme, getInitialTheme, type Theme } from '@/lib/theme';
 import { ItemDrawer } from '@/components/drawer/ItemDrawer';
+import { BaselinesView } from '@/features/baselines/BaselinesView';
 import { DashboardView } from '@/features/dashboard/DashboardView';
 import { PlanView } from '@/features/plan/PlanView';
 import { RequirementsView } from '@/features/requirements/RequirementsView';
@@ -38,6 +39,10 @@ export function AppShell() {
   const project = all.find((p) => p.id === selectedProjectId);
   const { data: runs = [] } = useRuns(selectedProjectId);
   const latestRun = runs[0];
+  const { data: baselines = [] } = useBaselines(selectedProjectId);
+  const [viewingBaselineId, setViewingBaselineId] = useState<string | undefined>();
+  const viewingBaseline = baselines.find((b) => b.id === viewingBaselineId);
+  const readOnly = Boolean(viewingBaseline);
 
   const toggleTheme = () =>
     setTheme((prev) => {
@@ -54,7 +59,10 @@ export function AppShell() {
       <Sidebar
         projects={projects}
         selectedProjectId={selectedProjectId}
-        onSelectProject={setSelectedProjectId}
+        onSelectProject={(id) => {
+          setSelectedProjectId(id);
+          setViewingBaselineId(undefined);
+        }}
         section={section}
         onSection={setSection}
         latestRun={latestRun}
@@ -67,29 +75,56 @@ export function AppShell() {
         onView={setView}
         theme={theme}
         onToggleTheme={toggleTheme}
+        baselines={baselines}
+        viewingBaselineId={viewingBaselineId}
+        onSelectBaseline={setViewingBaselineId}
       />
-      <main className="col-start-2 min-h-0 min-w-0 overflow-auto">
-        {isLoading ? (
-          <div className="text-mut-700 p-8">Loading…</div>
-        ) : isError ? (
-          <div className="text-fail-ink p-8">
-            Could not reach the API. Is the backend running on{' '}
-            <span className="font-mono">:8000</span>?
-          </div>
-        ) : section === 'requirements' ? (
-          <RequirementsView project={project} view={view} onOpenItem={setOpenItemId} />
-        ) : section === 'plan' ? (
-          <PlanView project={project} onOpenItem={setOpenItemId} />
-        ) : section === 'trace' ? (
-          <TraceView project={project} onOpenItem={setOpenItemId} />
-        ) : section === 'dashboard' ? (
-          <DashboardView project={project} />
-        ) : (
-          <div className="text-mut-700 p-8">
-            <span className="font-head text-ink text-xl">{SECTION_LABELS[section]}</span>
-            <p className="mt-1 text-[13px]">Arrives in a later phase.</p>
+      <main className="col-start-2 flex min-h-0 min-w-0 flex-col overflow-hidden">
+        {viewingBaseline && (
+          <div className="border-line bg-brand-100 text-brand-800 flex flex-none items-center gap-2.5 border-b px-4 py-1.5 text-[12.5px]">
+            <span>
+              Viewing baseline <b className="font-semibold">{viewingBaseline.name}</b> (
+              {new Date(viewingBaseline.created_at).toLocaleDateString()}) — read-only snapshot.
+            </span>
+            <button
+              type="button"
+              onClick={() => setViewingBaselineId(undefined)}
+              className="ml-auto hover:underline"
+            >
+              Back to Working
+            </button>
           </div>
         )}
+        <div className="min-h-0 flex-1 overflow-auto">
+          {isLoading ? (
+            <div className="text-mut-700 p-8">Loading…</div>
+          ) : isError ? (
+            <div className="text-fail-ink p-8">
+              Could not reach the API. Is the backend running on{' '}
+              <span className="font-mono">:8000</span>?
+            </div>
+          ) : section === 'requirements' ? (
+            <RequirementsView
+              project={project}
+              view={view}
+              onOpenItem={setOpenItemId}
+              readOnly={readOnly}
+            />
+          ) : section === 'plan' ? (
+            <PlanView project={project} onOpenItem={setOpenItemId} readOnly={readOnly} />
+          ) : section === 'trace' ? (
+            <TraceView project={project} onOpenItem={setOpenItemId} />
+          ) : section === 'dashboard' ? (
+            <DashboardView project={project} />
+          ) : section === 'baselines' ? (
+            <BaselinesView project={project} />
+          ) : (
+            <div className="text-mut-700 p-8">
+              <span className="font-head text-ink text-xl">{SECTION_LABELS[section]}</span>
+              <p className="mt-1 text-[13px]">Arrives in a later phase.</p>
+            </div>
+          )}
+        </div>
       </main>
       <ItemDrawer
         itemId={openItemId}

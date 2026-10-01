@@ -1,14 +1,20 @@
 import { AlertTriangle, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { useClearSuspect, useItem } from '@/api/hooks';
-import type { ItemDetail, LinkRef, Revision } from '@/api/types';
+import {
+  useAddComment,
+  useClearSuspect,
+  useItem,
+  useRequestReview,
+  useReviewDecision,
+} from '@/api/hooks';
+import type { ItemDetail, LinkRef, ReviewStatus, Revision } from '@/api/types';
 import { StatusBadge, StatusDot } from '@/components/StatusBadge';
 import { cn } from '@/lib/cn';
 import { diffText, stripHtml } from '@/lib/diff';
 import { SUSPECT_STYLE } from '@/lib/status';
 
-type Tab = 'details' | 'links' | 'history';
+type Tab = 'details' | 'links' | 'history' | 'review';
 
 const KIND_LABEL: Record<string, string> = {
   requirement: 'Requirement',
@@ -206,6 +212,7 @@ export function ItemDrawer({
                   ['details', 'Details', ''],
                   ['links', 'Links', String(item.upstream.length + item.downstream.length)],
                   ['history', 'History', String(item.revisions.length)],
+                  ['review', 'Review', item.review ? String(item.comments.length) : ''],
                 ] as [Tab, string, string][]
               ).map(([id, label, count]) => (
                 <button
@@ -305,10 +312,187 @@ export function ItemDrawer({
                 })}
               </div>
             )}
+            {tab === 'review' && <ReviewTab item={item} projectId={projectId} />}
           </div>
         </>
       )}
     </aside>
+  );
+}
+
+const REVIEW_STEPS: { key: ReviewStatus; label: string }[] = [
+  { key: 'in_review', label: 'In review' },
+  { key: 'changes_requested', label: 'Changes requested' },
+  { key: 'approved', label: 'Approved' },
+];
+
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .map((p) => p[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function ReviewTab({ item, projectId }: { item: ItemDetail; projectId: string | undefined }) {
+  const [comment, setComment] = useState('');
+  const requestReview = useRequestReview(projectId);
+  const decide = useReviewDecision(projectId);
+  const addComment = useAddComment(projectId);
+  const review = item.review;
+
+  if (!review) {
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="text-mut-700 text-[13px]">This item has no open review.</p>
+        <button
+          type="button"
+          onClick={() =>
+            requestReview.mutate({
+              itemId: item.id,
+              reviewers: [{ reviewer: 'Clara Martin', role: 'Verification' }],
+            })
+          }
+          disabled={requestReview.isPending}
+          className="bg-brand-600 text-canvas self-start px-3 py-1.5 text-[12.5px] disabled:opacity-50"
+        >
+          Request review
+        </button>
+      </div>
+    );
+  }
+
+  const activeStatus: ReviewStatus = review.status === 'requested' ? 'in_review' : review.status;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center">
+        {REVIEW_STEPS.map((step, i) => {
+          const active = step.key === activeStatus;
+          return (
+            <div key={step.key} className="flex flex-1 items-center">
+              <span
+                className="border px-2 py-0.5 text-[12px] whitespace-nowrap"
+                style={
+                  active
+                    ? {
+                        borderColor: 'var(--color-accent)',
+                        background: 'var(--color-accent-100)',
+                        color: 'var(--color-accent-800)',
+                      }
+                    : { borderColor: 'var(--color-divider)', color: 'var(--color-neutral-700)' }
+                }
+              >
+                {step.label}
+              </span>
+              {i < REVIEW_STEPS.length - 1 && (
+                <span className="h-px flex-1" style={{ background: 'var(--color-divider)' }} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div>
+        <div className="text-mut-700 mb-1.5 text-[10.5px] tracking-wider uppercase">Reviewers</div>
+        <div className="flex flex-col gap-2">
+          {review.assignments.map((a) => (
+            <div key={a.id} className="flex items-center gap-2.5">
+              <span className="bg-mut-200 text-mut-800 grid h-6 w-6 place-items-center rounded-full text-[10px] font-semibold">
+                {initials(a.reviewer)}
+              </span>
+              <span className="flex flex-1 flex-col leading-tight">
+                <span className="text-[13px]">{a.reviewer}</span>
+                {a.role && <span className="text-mut-700 text-[11.5px]">{a.role}</span>}
+              </span>
+              <span
+                className="text-[12px]"
+                style={{
+                  color:
+                    a.decision === 'approved'
+                      ? 'var(--st-ok-ink)'
+                      : a.decision === 'changes_requested'
+                        ? 'var(--st-fail-ink)'
+                        : 'var(--color-neutral-700)',
+                }}
+              >
+                {a.decision === 'pending'
+                  ? 'Pending'
+                  : a.decision === 'approved'
+                    ? 'Approved'
+                    : 'Changes'}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <div className="text-mut-700 mb-1.5 text-[10.5px] tracking-wider uppercase">Discussion</div>
+        {item.comments.length === 0 && (
+          <div className="text-mut-700 mb-2 text-[12.5px]">No comments yet.</div>
+        )}
+        <div className="mb-2 flex flex-col gap-3">
+          {item.comments.map((c) => (
+            <div
+              key={c.id}
+              className="grid gap-2.5"
+              style={{ gridTemplateColumns: '24px minmax(0,1fr)' }}
+            >
+              <span className="bg-brand-200 text-brand-800 grid h-6 w-6 place-items-center rounded-full text-[10px] font-semibold">
+                {initials(c.author)}
+              </span>
+              <div>
+                <div className="text-[12px]">
+                  <b className="font-semibold">{c.author}</b>{' '}
+                  <span className="text-mut-700">
+                    · {new Date(c.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+                <div className="text-[13px] leading-relaxed">{c.body}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <textarea
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Comment…"
+          className="border-line bg-panel h-16 w-full border p-2 text-[13px] outline-none"
+        />
+        <div className="mt-2 flex gap-1.5">
+          <button
+            type="button"
+            disabled={!comment.trim() || addComment.isPending}
+            onClick={() =>
+              addComment.mutate(
+                { itemId: item.id, body: comment },
+                { onSuccess: () => setComment('') },
+              )
+            }
+            className="border-line hover:bg-panel border px-2.5 py-1 text-[12.5px] disabled:opacity-50"
+          >
+            Comment
+          </button>
+          <span className="flex-1" />
+          <button
+            type="button"
+            onClick={() => decide.mutate({ reviewId: review.id, decision: 'changes_requested' })}
+            className="border-line hover:bg-panel border px-2.5 py-1 text-[12.5px]"
+          >
+            Request changes
+          </button>
+          <button
+            type="button"
+            onClick={() => decide.mutate({ reviewId: review.id, decision: 'approved' })}
+            className="bg-brand-600 text-canvas px-2.5 py-1 text-[12.5px]"
+          >
+            Approve
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -18,6 +18,7 @@ interface Props {
   requirements: Item[];
   onUpdate: (id: string, patch: ItemUpdate) => void;
   onOpenItem: (id: string) => void;
+  readOnly?: boolean;
 }
 
 const PRIORITIES = ['P1', 'P2', 'P3'];
@@ -29,7 +30,7 @@ const WORKFLOW_LABEL: Record<string, string> = {
 
 const column = createColumnHelper<Item>();
 
-export function GridView({ requirements, onUpdate, onOpenItem }: Props) {
+export function GridView({ requirements, onUpdate, onOpenItem, readOnly = false }: Props) {
   const [sorting, setSorting] = useState<SortingState>([{ id: 'human_id', desc: false }]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
@@ -75,8 +76,9 @@ export function GridView({ requirements, onUpdate, onOpenItem }: Props) {
           }
           return (
             <span
-              className="cursor-text"
+              className={readOnly ? undefined : 'cursor-text'}
               onDoubleClick={() => {
+                if (readOnly) return;
                 setEditingTitle(item.id);
                 setTitleDraft(item.title);
               }}
@@ -98,10 +100,11 @@ export function GridView({ requirements, onUpdate, onOpenItem }: Props) {
           return (
             <select
               value={(item.attributes.priority as string) ?? 'P2'}
+              disabled={readOnly}
               onChange={(e) =>
                 onUpdate(item.id, { attributes: { ...item.attributes, priority: e.target.value } })
               }
-              className="border-line bg-canvas border px-1 py-0.5 font-mono text-[12px] outline-none"
+              className="border-line bg-canvas border px-1 py-0.5 font-mono text-[12px] outline-none disabled:opacity-70"
             >
               {PRIORITIES.map((p) => (
                 <option key={p} value={p}>
@@ -165,7 +168,7 @@ export function GridView({ requirements, onUpdate, onOpenItem }: Props) {
         cell: (ctx) => <StatusBadge status={ctx.row.original.status} />,
       }),
     ],
-    [editingTitle, titleDraft, onUpdate, onOpenItem],
+    [editingTitle, titleDraft, onUpdate, onOpenItem, readOnly],
   );
 
   const table = useReactTable({

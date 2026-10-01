@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { api } from './client';
 import type {
+  Baseline,
+  BaselineDetail,
   Dashboard,
   EarsReport,
   Evidence,
@@ -15,6 +17,7 @@ import type {
   LinkCreated,
   ProjectNode,
   RegressionRun,
+  ReviewDecision,
 } from './types';
 
 export const queryKeys = {
@@ -25,6 +28,7 @@ export const queryKeys = {
   evidence: (projectId: string) => ['evidence', projectId] as const,
   dashboard: (projectId: string) => ['dashboard', projectId] as const,
   runs: (projectId: string) => ['runs', projectId] as const,
+  baselines: (projectId: string) => ['baselines', projectId] as const,
 };
 
 export function useProjects() {
@@ -90,6 +94,65 @@ function useInvalidateProject(projectId: string | undefined) {
     // Any open drawer reflects link/status changes.
     client.invalidateQueries({ queryKey: ['item'] });
   };
+}
+
+export function useRequestReview(projectId: string | undefined) {
+  const invalidate = useInvalidateProject(projectId);
+  return useMutation({
+    mutationFn: ({
+      itemId,
+      reviewers,
+    }: {
+      itemId: string;
+      reviewers: { reviewer: string; role?: string }[];
+    }) => api.post<ItemDetail>(`/api/items/${itemId}/reviews`, { reviewers }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useReviewDecision(projectId: string | undefined) {
+  const invalidate = useInvalidateProject(projectId);
+  return useMutation({
+    mutationFn: ({ reviewId, decision }: { reviewId: string; decision: ReviewDecision }) =>
+      api.post<ItemDetail>(`/api/reviews/${reviewId}/decision`, { decision }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useAddComment(projectId: string | undefined) {
+  const invalidate = useInvalidateProject(projectId);
+  return useMutation({
+    mutationFn: ({ itemId, body }: { itemId: string; body: string }) =>
+      api.post<ItemDetail>(`/api/items/${itemId}/comments`, { body }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useBaselines(projectId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.baselines(projectId ?? ''),
+    queryFn: () => api.get<Baseline[]>(`/api/projects/${projectId}/baselines`),
+    enabled: Boolean(projectId),
+  });
+}
+
+export function useBaseline(baselineId: string | undefined) {
+  return useQuery({
+    queryKey: ['baseline', baselineId ?? ''],
+    queryFn: () => api.get<BaselineDetail>(`/api/baselines/${baselineId}`),
+    enabled: Boolean(baselineId),
+  });
+}
+
+export function useCreateBaseline(projectId: string | undefined) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { name: string; milestone?: string; description?: string }) =>
+      api.post<BaselineDetail>(`/api/projects/${projectId}/baselines`, payload),
+    onSuccess: () => {
+      if (projectId) client.invalidateQueries({ queryKey: queryKeys.baselines(projectId) });
+    },
+  });
 }
 
 export function useDashboard(projectId: string | undefined) {

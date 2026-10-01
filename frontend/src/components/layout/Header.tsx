@@ -1,6 +1,6 @@
-import { FileText, Grid3x3, Moon, Sun } from 'lucide-react';
+import { FileText, Grid3x3, Layers, Moon, Sun } from 'lucide-react';
 
-import type { ProjectNode } from '@/api/types';
+import type { Baseline, ProjectNode } from '@/api/types';
 import type { Theme } from '@/lib/theme';
 import { cn } from '@/lib/cn';
 
@@ -14,9 +14,23 @@ interface Props {
   onView: (v: View) => void;
   theme: Theme;
   onToggleTheme: () => void;
+  baselines: Baseline[];
+  viewingBaselineId: string | undefined;
+  onSelectBaseline: (id: string | undefined) => void;
 }
 
-export function Header({ socName, project, section, view, onView, theme, onToggleTheme }: Props) {
+export function Header({
+  socName,
+  project,
+  section,
+  view,
+  onView,
+  theme,
+  onToggleTheme,
+  baselines,
+  viewingBaselineId,
+  onSelectBaseline,
+}: Props) {
   return (
     <header className="border-line col-start-2 flex min-w-0 items-center gap-3 border-b px-3.5">
       <div className="flex min-w-0 flex-[0_1_auto] items-center gap-1.5 overflow-hidden text-[13px] whitespace-nowrap">
@@ -53,6 +67,22 @@ export function Header({ socName, project, section, view, onView, theme, onToggl
           </button>
         </div>
       ) : null}
+
+      <div className="border-line flex flex-none items-center gap-1.5 border px-2 py-1 text-[12.5px]">
+        <Layers size={13} className="text-mut-700" />
+        <select
+          value={viewingBaselineId ?? ''}
+          onChange={(e) => onSelectBaseline(e.target.value || undefined)}
+          className="bg-transparent font-semibold outline-none"
+        >
+          <option value="">Working</option>
+          {baselines.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <button
         type="button"

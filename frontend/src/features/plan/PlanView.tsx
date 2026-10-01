@@ -41,9 +41,11 @@ function evidenceMeta(
 export function PlanView({
   project,
   onOpenItem,
+  readOnly = false,
 }: {
   project: ProjectNode | undefined;
   onOpenItem: (id: string) => void;
+  readOnly?: boolean;
 }) {
   const projectId = project?.id;
   const { data: items = [] } = useItems(projectId);
@@ -78,7 +80,7 @@ export function PlanView({
   if (!project) return <div className="text-mut-700 p-8">Select an IP from the hierarchy.</div>;
 
   const linkEvidence = (evidenceId: string) => {
-    if (!currentId) return;
+    if (!currentId || readOnly) return;
     createLink.mutate({
       link_type: 'evidenced_by',
       upstream_item_id: currentId,
@@ -236,14 +238,16 @@ export function PlanView({
                             <span className="text-mut-700 font-mono text-[12px]">
                               {meta.metric}
                             </span>
-                            <button
-                              type="button"
-                              title="Unlink"
-                              onClick={() => deleteLink.mutate(l.link_id)}
-                              className="text-mut-500 hover:text-fail-ink"
-                            >
-                              <X size={13} />
-                            </button>
+                            {!readOnly && (
+                              <button
+                                type="button"
+                                title="Unlink"
+                                onClick={() => deleteLink.mutate(l.link_id)}
+                                className="text-mut-500 hover:text-fail-ink"
+                              >
+                                <X size={13} />
+                              </button>
+                            )}
                           </div>
                         );
                       })
@@ -286,53 +290,57 @@ export function PlanView({
           </div>
 
           {/* Add evidence by hand (e.g. planned, not yet in Git). */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              void addEvidence();
-            }}
-            className="border-line flex flex-col gap-1.5 border border-dashed p-2"
-          >
-            <div className="text-mut-700 text-[10.5px] tracking-wider uppercase">Add evidence</div>
-            <div className="flex gap-1.5">
-              <select
-                value={newKind}
-                onChange={(e) => setNewKind(e.target.value as EvidenceKind)}
-                className="border-line bg-canvas border px-1 py-1 text-[12px] outline-none"
-              >
-                <option value="test">test</option>
-                <option value="coverpoint">coverpoint</option>
-                <option value="assertion">assertion</option>
-              </select>
-              <input
-                value={newFqn}
-                onChange={(e) => setNewFqn(e.target.value)}
-                placeholder={
-                  newKind === 'test'
-                    ? 'my_new_test'
-                    : newKind === 'coverpoint'
-                      ? 'cg_x.cp_y'
-                      : 'a_my_assertion'
-                }
-                className="border-line bg-canvas min-w-0 flex-1 border px-2 py-1 font-mono text-[12px] outline-none"
-              />
-              <button
-                type="submit"
-                disabled={!newFqn.trim() || createEvidence.isPending}
-                className="bg-brand-600 text-canvas px-2 text-[12px] disabled:opacity-50"
-              >
-                Add
-              </button>
-            </div>
-            <label className="text-mut-700 flex items-center gap-1.5 text-[11.5px]">
-              <input
-                type="checkbox"
-                checked={linkOnAdd}
-                onChange={(e) => setLinkOnAdd(e.target.checked)}
-              />
-              Link to current plan item
-            </label>
-          </form>
+          {!readOnly && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                void addEvidence();
+              }}
+              className="border-line flex flex-col gap-1.5 border border-dashed p-2"
+            >
+              <div className="text-mut-700 text-[10.5px] tracking-wider uppercase">
+                Add evidence
+              </div>
+              <div className="flex gap-1.5">
+                <select
+                  value={newKind}
+                  onChange={(e) => setNewKind(e.target.value as EvidenceKind)}
+                  className="border-line bg-canvas border px-1 py-1 text-[12px] outline-none"
+                >
+                  <option value="test">test</option>
+                  <option value="coverpoint">coverpoint</option>
+                  <option value="assertion">assertion</option>
+                </select>
+                <input
+                  value={newFqn}
+                  onChange={(e) => setNewFqn(e.target.value)}
+                  placeholder={
+                    newKind === 'test'
+                      ? 'my_new_test'
+                      : newKind === 'coverpoint'
+                        ? 'cg_x.cp_y'
+                        : 'a_my_assertion'
+                  }
+                  className="border-line bg-canvas min-w-0 flex-1 border px-2 py-1 font-mono text-[12px] outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={!newFqn.trim() || createEvidence.isPending}
+                  className="bg-brand-600 text-canvas px-2 text-[12px] disabled:opacity-50"
+                >
+                  Add
+                </button>
+              </div>
+              <label className="text-mut-700 flex items-center gap-1.5 text-[11.5px]">
+                <input
+                  type="checkbox"
+                  checked={linkOnAdd}
+                  onChange={(e) => setLinkOnAdd(e.target.checked)}
+                />
+                Link to current plan item
+              </label>
+            </form>
+          )}
         </div>
         <div className="min-h-0 flex-1 overflow-auto p-1.5">
           {filteredCatalog.map((ev) => {
@@ -348,14 +356,16 @@ export function PlanView({
                   <GripVertical size={12} className="text-mut-500 flex-none" />
                   <span className="text-brand-700 font-mono text-[9.5px] uppercase">{ev.kind}</span>
                   <span className="min-w-0 flex-1 truncate font-mono text-[11.5px]">{ev.fqn}</span>
-                  <button
-                    type="button"
-                    title="Link to current plan item"
-                    onClick={() => linkEvidence(ev.id)}
-                    className="text-brand-700 hover:text-brand-800"
-                  >
-                    <Plus size={14} />
-                  </button>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      title="Link to current plan item"
+                      onClick={() => linkEvidence(ev.id)}
+                      className="text-brand-700 hover:text-brand-800"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  )}
                 </div>
                 <div className="flex items-center gap-1.5 pl-[18px] text-[10.5px]">
                   {ev.in_git && <span className="bg-mut-200 text-mut-800 px-1">Git</span>}
