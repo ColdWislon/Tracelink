@@ -9,10 +9,19 @@ import {
   MessagesSquare,
 } from 'lucide-react';
 
-import type { ProjectNode } from '@/api/types';
+import type { ProjectNode, RegressionRun } from '@/api/types';
 import { cn } from '@/lib/cn';
 
 import { SECTION_LABELS, type Section } from './types';
+
+function relativeTime(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const hours = Math.round(diffMs / 3_600_000);
+  if (hours < 1) return 'just now';
+  if (hours < 24) return `${hours} h ago`;
+  return `${Math.round(hours / 24)} d ago`;
+}
 
 const NAV: { section: Section; icon: typeof FileText }[] = [
   { section: 'requirements', icon: FileText },
@@ -30,6 +39,7 @@ interface Props {
   onSelectProject: (id: string) => void;
   section: Section;
   onSection: (s: Section) => void;
+  latestRun?: RegressionRun;
 }
 
 function TreeNode({
@@ -79,6 +89,7 @@ export function Sidebar({
   onSelectProject,
   section,
   onSection,
+  latestRun,
 }: Props) {
   const root = projects[0];
   return (
@@ -146,9 +157,14 @@ export function Sidebar({
 
       <div className="border-line text-mut-700 flex flex-none items-center gap-2 border-t px-3.5 py-2.5 text-[11.5px]">
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--st-ok)' }} />
-        <span>
-          Jenkins <span className="font-mono">#1842</span> imported
-        </span>
+        {latestRun ? (
+          <span>
+            {latestRun.source} <span className="font-mono">{latestRun.external_id ?? ''}</span>{' '}
+            imported {relativeTime(latestRun.imported_at)}
+          </span>
+        ) : (
+          <span>No regression run imported</span>
+        )}
       </div>
     </aside>
   );

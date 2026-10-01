@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { api } from './client';
 import type {
+  Dashboard,
   EarsReport,
   Evidence,
   EvidenceCreate,
@@ -13,6 +14,7 @@ import type {
   LinkCreate,
   LinkCreated,
   ProjectNode,
+  RegressionRun,
 } from './types';
 
 export const queryKeys = {
@@ -21,6 +23,8 @@ export const queryKeys = {
   item: (itemId: string) => ['item', itemId] as const,
   itemTypes: (projectId: string) => ['item-types', projectId] as const,
   evidence: (projectId: string) => ['evidence', projectId] as const,
+  dashboard: (projectId: string) => ['dashboard', projectId] as const,
+  runs: (projectId: string) => ['runs', projectId] as const,
 };
 
 export function useProjects() {
@@ -78,10 +82,38 @@ function useInvalidateProject(projectId: string | undefined) {
       client.invalidateQueries({ queryKey: queryKeys.items(projectId) });
       client.invalidateQueries({ queryKey: queryKeys.evidence(projectId) });
     }
+    if (projectId) {
+      client.invalidateQueries({ queryKey: queryKeys.dashboard(projectId) });
+      client.invalidateQueries({ queryKey: queryKeys.runs(projectId) });
+    }
     client.invalidateQueries({ queryKey: queryKeys.projects });
     // Any open drawer reflects link/status changes.
     client.invalidateQueries({ queryKey: ['item'] });
   };
+}
+
+export function useDashboard(projectId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.dashboard(projectId ?? ''),
+    queryFn: () => api.get<Dashboard>(`/api/projects/${projectId}/dashboard`),
+    enabled: Boolean(projectId),
+  });
+}
+
+export function useRuns(projectId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.runs(projectId ?? ''),
+    queryFn: () => api.get<RegressionRun[]>(`/api/projects/${projectId}/runs`),
+    enabled: Boolean(projectId),
+  });
+}
+
+export function useIngestRun(projectId: string | undefined) {
+  const invalidate = useInvalidateProject(projectId);
+  return useMutation({
+    mutationFn: (payload: unknown) => api.post<unknown>('/api/regression/runs', payload),
+    onSuccess: invalidate,
+  });
 }
 
 export function useCreateItem(projectId: string | undefined) {

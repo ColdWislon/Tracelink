@@ -148,9 +148,12 @@ npm run dev        # or: npm run build
   `@mention` autocomplete creating links; evidence-catalog drag & drop onto plan
   items (Verification Plan view); item detail drawer (Details / Links + suspect +
   Clear / History with diff); traceability matrix with orphan highlighting.
-- **Phase 3 — Regression import & status pipeline.** Ingestion endpoint driven by
-  `rtrack-push` + Cadence vManager/IMC export. *(Ingestion endpoint, JSON Schema,
-  and the CLI are scaffolded earlier; the export is out of scope until here.)*
+- **Phase 3 — Regression import & status pipeline.** ✅ Ingestion endpoint +
+  JSON Schema; run history + per-kind summaries; verification-closure dashboard
+  (status counts, coverage %, suspect/orphan counts, latest run); import-run UI;
+  `rtrack-push --fake`/`--file`. *(The real Cadence vManager/IMC export that
+  produces the payload stays out of scope — no tooling here; the documented JSON
+  payload is the ingestion contract.)*
 - **Phase 4 — Reviews & baselines UI.**
 - **Phase 5 — IP reuse & variants UI.**
 - **Phase 6 — AI assistant & Word import.**

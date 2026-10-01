@@ -139,7 +139,11 @@ export function EarsEditor({ body, onCommit, onReport, mentionItems = [], onMent
   });
 
   useEffect(() => {
-    if (editor && body) runCheck(editor);
+    if (!editor) return;
+    // Baseline against the editor's normalized HTML so a focus/blur with no real
+    // edit does not commit a spurious revision.
+    lastCommitted.current = editor.getHTML();
+    if (body) runCheck(editor);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor]);
 

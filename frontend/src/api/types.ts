@@ -150,6 +150,49 @@ export interface Evidence {
   satisfied: boolean;
 }
 
+export interface KindSummary {
+  total: number;
+  satisfied: number;
+  partial: number;
+  failing: number;
+  not_run: number;
+}
+
+export interface RegressionRun {
+  id: string;
+  project_id: string;
+  source: string;
+  external_id: string | null;
+  label: string | null;
+  started_at: string | null;
+  finished_at: string | null;
+  imported_at: string | null;
+  result_count: number;
+  tests: KindSummary;
+  coverpoints: KindSummary;
+  assertions: KindSummary;
+}
+
+export interface StatusCounts {
+  covered: number;
+  partial: number;
+  failing: number;
+  not_run: number;
+  uncovered: number;
+}
+
+export interface Dashboard {
+  requirements: StatusCounts;
+  verification_items: StatusCounts;
+  requirement_total: number;
+  covered_pct: number;
+  suspect_links: number;
+  orphan_requirements: number;
+  orphan_verification_items: number;
+  orphan_evidence: number;
+  latest_run: RegressionRun | null;
+}
+
 export interface EvidenceCreate {
   kind: EvidenceKind;
   fqn: string;

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import type { ProjectNode } from '@/api/types';
-import { useProjects } from '@/api/hooks';
+import { useProjects, useRuns } from '@/api/hooks';
 import { applyTheme, getInitialTheme, type Theme } from '@/lib/theme';
 import { ItemDrawer } from '@/components/drawer/ItemDrawer';
+import { DashboardView } from '@/features/dashboard/DashboardView';
 import { PlanView } from '@/features/plan/PlanView';
 import { RequirementsView } from '@/features/requirements/RequirementsView';
 import { TraceView } from '@/features/trace/TraceView';
@@ -35,6 +36,8 @@ export function AppShell() {
   }, [all, selectedProjectId]);
 
   const project = all.find((p) => p.id === selectedProjectId);
+  const { data: runs = [] } = useRuns(selectedProjectId);
+  const latestRun = runs[0];
 
   const toggleTheme = () =>
     setTheme((prev) => {
@@ -54,6 +57,7 @@ export function AppShell() {
         onSelectProject={setSelectedProjectId}
         section={section}
         onSection={setSection}
+        latestRun={latestRun}
       />
       <Header
         socName={socName}
@@ -78,6 +82,8 @@ export function AppShell() {
           <PlanView project={project} onOpenItem={setOpenItemId} />
         ) : section === 'trace' ? (
           <TraceView project={project} onOpenItem={setOpenItemId} />
+        ) : section === 'dashboard' ? (
+          <DashboardView project={project} />
         ) : (
           <div className="text-mut-700 p-8">
             <span className="font-head text-ink text-xl">{SECTION_LABELS[section]}</span>
