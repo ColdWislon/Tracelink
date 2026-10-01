@@ -6,13 +6,15 @@ import uuid
 
 from fastapi import APIRouter, HTTPException
 
-from app.core.deps import SessionDep
+from app.core.deps import CurrentUser, SessionDep
 from app.repositories import projects as project_repo
+from app.schemas.baseline import BaselineCreate, BaselineDetail, BaselineRead
 from app.schemas.dashboard import DashboardRead
 from app.schemas.evidence import EvidenceCreate, EvidenceRead, RegressionRunRead
 from app.schemas.item import ItemRead
 from app.schemas.project import ItemTypeRead, ProjectNode, ProjectRead
 from app.services import (
+    baseline_service,
     dashboard_service,
     evidence_service,
     item_service,
@@ -73,3 +75,18 @@ def list_runs(project_id: uuid.UUID, session: SessionDep) -> list[RegressionRunR
 @router.get("/{project_id}/dashboard", response_model=DashboardRead)
 def dashboard(project_id: uuid.UUID, session: SessionDep) -> DashboardRead:
     return dashboard_service.compute(session, project_id)
+
+
+@router.get("/{project_id}/baselines", response_model=list[BaselineRead])
+def list_baselines(project_id: uuid.UUID, session: SessionDep) -> list[BaselineRead]:
+    return baseline_service.list_baselines(session, project_id)
+
+
+@router.post("/{project_id}/baselines", response_model=BaselineDetail, status_code=201)
+def create_baseline(
+    project_id: uuid.UUID, payload: BaselineCreate, session: SessionDep, user: CurrentUser
+) -> BaselineDetail:
+    try:
+        return baseline_service.create_baseline(session, project_id, payload, author=user)
+    except DomainError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc

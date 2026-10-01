@@ -122,6 +122,24 @@ def test_dashboard_and_runs(seeded: Session) -> None:
     assert runs[0].tests.total > 0
 
 
+def test_baseline_snapshots_subtree(seeded: Session) -> None:
+    from app.schemas.baseline import BaselineCreate
+    from app.services import baseline_service
+
+    aurora = get_project_by_key(seeded, "aurora")
+    assert aurora is not None
+    detail = baseline_service.create_baseline(
+        seeded, aurora.id, BaselineCreate(name="RTL freeze", milestone="RTL"), author="tester"
+    )
+    # A SoC baseline captures all 36 items across PCIe/DMA/IRQ (16 req + 20 vp).
+    assert detail.entry_count == 36
+    assert detail.frozen is True
+    assert any(e.human_id == "REQ-PCIE-012" and e.rev_number == 4 for e in detail.entries)
+
+    names = [b.name for b in baseline_service.list_baselines(seeded, aurora.id)]
+    assert "RTL freeze" in names
+
+
 def test_aurora_hierarchy(seeded: Session) -> None:
     aurora = get_project_by_key(seeded, "aurora")
     assert aurora is not None
