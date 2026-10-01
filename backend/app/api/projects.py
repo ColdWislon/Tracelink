@@ -8,10 +8,11 @@ from fastapi import APIRouter, HTTPException
 
 from app.core.deps import SessionDep
 from app.repositories import projects as project_repo
-from app.schemas.evidence import EvidenceRead
+from app.schemas.evidence import EvidenceCreate, EvidenceRead
 from app.schemas.item import ItemRead
 from app.schemas.project import ItemTypeRead, ProjectNode, ProjectRead
 from app.services import evidence_service, item_service, project_service
+from app.services.item_service import DomainError
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -43,3 +44,15 @@ def list_items(project_id: uuid.UUID, session: SessionDep) -> list[ItemRead]:
 @router.get("/{project_id}/evidence", response_model=list[EvidenceRead])
 def list_evidence(project_id: uuid.UUID, session: SessionDep) -> list[EvidenceRead]:
     return evidence_service.list_catalog(session, project_id)
+
+
+@router.post("/{project_id}/evidence", response_model=EvidenceRead, status_code=201)
+def create_evidence(
+    project_id: uuid.UUID, payload: EvidenceCreate, session: SessionDep
+) -> EvidenceRead:
+    try:
+        return evidence_service.create_evidence(
+            session, project_id, payload.kind, payload.fqn, payload.name
+        )
+    except DomainError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc

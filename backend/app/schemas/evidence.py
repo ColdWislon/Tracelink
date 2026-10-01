@@ -10,6 +10,14 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.models.enums import EvidenceKind
 
 
+class EvidenceCreate(BaseModel):
+    """Manually add a catalog entry (e.g. planned evidence not yet in Git)."""
+
+    kind: EvidenceKind
+    fqn: str = Field(min_length=1, max_length=400)
+    name: str | None = None
+
+
 class EvidenceRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

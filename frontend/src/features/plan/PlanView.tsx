@@ -1,7 +1,14 @@
 import { GripVertical, Plus, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { useCreateLink, useDeleteLink, useEvidence, useItem, useItems } from '@/api/hooks';
+import {
+  useCreateEvidence,
+  useCreateLink,
+  useDeleteLink,
+  useEvidence,
+  useItem,
+  useItems,
+} from '@/api/hooks';
 import type { Evidence, EvidenceKind, LinkRef, ProjectNode } from '@/api/types';
 import { StatusBadge, StatusDot } from '@/components/StatusBadge';
 import { cn } from '@/lib/cn';
@@ -45,9 +52,13 @@ export function PlanView({
   const [catQuery, setCatQuery] = useState('');
   const [source, setSource] = useState<'all' | 'git' | 'regression'>('all');
   const [dragOver, setDragOver] = useState(false);
+  const [newKind, setNewKind] = useState<EvidenceKind>('test');
+  const [newFqn, setNewFqn] = useState('');
+  const [linkOnAdd, setLinkOnAdd] = useState(true);
 
   const createLink = useCreateLink(projectId);
   const deleteLink = useDeleteLink(projectId);
+  const createEvidence = useCreateEvidence(projectId);
 
   const vps = useMemo(() => items.filter((i) => i.base_kind === 'verification_item'), [items]);
   const currentId = selectedId ?? vps[0]?.id;
@@ -73,6 +84,20 @@ export function PlanView({
       upstream_item_id: currentId,
       downstream_evidence_id: evidenceId,
     });
+  };
+
+  const addEvidence = async () => {
+    const fqn = newFqn.trim();
+    if (!fqn) return;
+    const created = await createEvidence.mutateAsync({ kind: newKind, fqn });
+    if (linkOnAdd && currentId) {
+      createLink.mutate({
+        link_type: 'evidenced_by',
+        upstream_item_id: currentId,
+        downstream_evidence_id: created.id,
+      });
+    }
+    setNewFqn('');
   };
 
   const downstreamByKind = (kind: EvidenceKind): LinkRef[] =>
@@ -259,6 +284,55 @@ export function PlanView({
               </button>
             ))}
           </div>
+
+          {/* Add evidence by hand (e.g. planned, not yet in Git). */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void addEvidence();
+            }}
+            className="border-line flex flex-col gap-1.5 border border-dashed p-2"
+          >
+            <div className="text-mut-700 text-[10.5px] tracking-wider uppercase">Add evidence</div>
+            <div className="flex gap-1.5">
+              <select
+                value={newKind}
+                onChange={(e) => setNewKind(e.target.value as EvidenceKind)}
+                className="border-line bg-canvas border px-1 py-1 text-[12px] outline-none"
+              >
+                <option value="test">test</option>
+                <option value="coverpoint">coverpoint</option>
+                <option value="assertion">assertion</option>
+              </select>
+              <input
+                value={newFqn}
+                onChange={(e) => setNewFqn(e.target.value)}
+                placeholder={
+                  newKind === 'test'
+                    ? 'my_new_test'
+                    : newKind === 'coverpoint'
+                      ? 'cg_x.cp_y'
+                      : 'a_my_assertion'
+                }
+                className="border-line bg-canvas min-w-0 flex-1 border px-2 py-1 font-mono text-[12px] outline-none"
+              />
+              <button
+                type="submit"
+                disabled={!newFqn.trim() || createEvidence.isPending}
+                className="bg-brand-600 text-canvas px-2 text-[12px] disabled:opacity-50"
+              >
+                Add
+              </button>
+            </div>
+            <label className="text-mut-700 flex items-center gap-1.5 text-[11.5px]">
+              <input
+                type="checkbox"
+                checked={linkOnAdd}
+                onChange={(e) => setLinkOnAdd(e.target.checked)}
+              />
+              Link to current plan item
+            </label>
+          </form>
         </div>
         <div className="min-h-0 flex-1 overflow-auto p-1.5">
           {filteredCatalog.map((ev) => {

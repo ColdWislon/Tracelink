@@ -150,6 +150,12 @@ export interface Evidence {
   satisfied: boolean;
 }
 
+export interface EvidenceCreate {
+  kind: EvidenceKind;
+  fqn: string;
+  name?: string;
+}
+
 export interface LinkCreate {
   link_type: LinkType;
   upstream_item_id: string;

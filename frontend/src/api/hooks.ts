@@ -4,6 +4,7 @@ import { api } from './client';
 import type {
   EarsReport,
   Evidence,
+  EvidenceCreate,
   Item,
   ItemCreate,
   ItemDetail,
@@ -58,6 +59,15 @@ export function useEvidence(projectId: string | undefined) {
     queryKey: queryKeys.evidence(projectId ?? ''),
     queryFn: () => api.get<Evidence[]>(`/api/projects/${projectId}/evidence`),
     enabled: Boolean(projectId),
+  });
+}
+
+export function useCreateEvidence(projectId: string | undefined) {
+  const invalidate = useInvalidateProject(projectId);
+  return useMutation({
+    mutationFn: (payload: EvidenceCreate) =>
+      api.post<Evidence>(`/api/projects/${projectId}/evidence`, payload),
+    onSuccess: invalidate,
   });
 }
 
