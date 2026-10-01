@@ -11,7 +11,9 @@ from app.models import AuditLog, Item, ItemRevision, Link
 from app.models.enums import VerificationStatus
 from app.repositories import items as item_repo
 from app.repositories import projects as project_repo
+from app.repositories import reviews as review_repo
 from app.schemas.item import ItemCreate, ItemDetail, ItemRead, ItemUpdate, LinkRef, RevisionRead
+from app.schemas.review import CommentRead, ReviewRead
 from app.services import status_service
 from app.services.domain.attributes import normalize_attributes, validate_attributes
 from app.services.domain.ears import detect_pattern
@@ -235,10 +237,14 @@ def get_item_read(session: Session, item_id: uuid.UUID) -> ItemDetail | None:
     base = _to_read(
         item, statuses.get(item.id), upstream.get(item.id, []), downstream.get(item.id, [])
     )
+    review = review_repo.latest_review_for_item(session, item.id)
+    comments = review_repo.comments_for_item(session, item.id)
     return ItemDetail(
         **base.model_dump(),
         revisions=[
             RevisionRead.model_validate(r)
             for r in sorted(item.revisions, key=lambda r: r.rev_number, reverse=True)
         ],
+        review=ReviewRead.model_validate(review) if review else None,
+        comments=[CommentRead.model_validate(c) for c in comments],
     )

@@ -15,6 +15,7 @@ from app.models.enums import (
     VerificationStatus,
     WorkflowStatus,
 )
+from app.schemas.review import CommentRead, ReviewRead
 
 
 class LinkRef(BaseModel):
@@ -89,3 +90,5 @@ class ItemUpdate(BaseModel):
 
 class ItemDetail(ItemRead):
     revisions: list[RevisionRead] = []
+    review: ReviewRead | None = None
+    comments: list[CommentRead] = []

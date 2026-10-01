@@ -8,7 +8,8 @@ from fastapi import APIRouter, HTTPException
 
 from app.core.deps import CurrentUser, SessionDep
 from app.schemas.item import ItemCreate, ItemDetail, ItemRead, ItemUpdate
-from app.services import item_service
+from app.schemas.review import CommentCreate, ReviewRequest
+from app.services import item_service, review_service
 from app.services.item_service import DomainError
 
 router = APIRouter(prefix="/items", tags=["items"])
@@ -40,6 +41,34 @@ def update_item(
 ) -> ItemDetail:
     try:
         item_service.update_item(session, item_id, payload, author=user)
+    except DomainError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    session.flush()
+    detail = item_service.get_item_read(session, item_id)
+    assert detail is not None
+    return detail
+
+
+@router.post("/{item_id}/reviews", response_model=ItemDetail, status_code=201)
+def request_review(
+    item_id: uuid.UUID, payload: ReviewRequest, session: SessionDep, user: CurrentUser
+) -> ItemDetail:
+    try:
+        review_service.request_review(session, item_id, payload.reviewers, author=user)
+    except DomainError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    session.flush()
+    detail = item_service.get_item_read(session, item_id)
+    assert detail is not None
+    return detail
+
+
+@router.post("/{item_id}/comments", response_model=ItemDetail, status_code=201)
+def add_comment(
+    item_id: uuid.UUID, payload: CommentCreate, session: SessionDep, user: CurrentUser
+) -> ItemDetail:
+    try:
+        review_service.add_comment(session, item_id, payload.body, author=user)
     except DomainError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     session.flush()
