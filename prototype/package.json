@@ -1,0 +1,22 @@
+{
+  "name": "trace-prototype",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "@tiptap/core": "2.27.3",
+    "@tiptap/pm": "2.27.3",
+    "@tiptap/starter-kit": "2.27.3",
+    "@tiptap/extension-table": "2.27.3",
+    "@tiptap/extension-table-row": "2.27.3",
+    "@tiptap/extension-table-cell": "2.27.3",
+    "@tiptap/extension-table-header": "2.27.3",
+    "@tiptap/extension-placeholder": "2.27.3",
+    "wavedrom": "3.7.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

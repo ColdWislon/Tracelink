@@ -1,0 +1,179 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-10-07T19:57:55Z"
+ },
+ "title": "Trace, maquettes des vues",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 1240,
+   "title": "1. Tableau de bord",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Document.dc.html": {
+   "x": 1520,
+   "y": 0,
+   "w": 1440,
+   "h": 1240,
+   "title": "2. Document",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Panneau.dc.html": {
+   "x": 3040,
+   "y": 0,
+   "w": 1440,
+   "h": 1180,
+   "title": "3. Panneau d’une exigence",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Explorateur.dc.html": {
+   "x": 0,
+   "y": 1360,
+   "w": 1440,
+   "h": 1000,
+   "title": "4. Explorateur de traçabilité",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Matrice.dc.html": {
+   "x": 1520,
+   "y": 1360,
+   "w": 1440,
+   "h": 1960,
+   "title": "5. Matrice de couverture",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Resultats.dc.html": {
+   "x": 3040,
+   "y": 1360,
+   "w": 1440,
+   "h": 980,
+   "title": "6. Résultats de vérification",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Anomalies.dc.html": {
+   "x": 0,
+   "y": 3440,
+   "w": 1440,
+   "h": 1500,
+   "title": "7. Anomalies",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Import.dc.html": {
+   "x": 1520,
+   "y": 3440,
+   "w": 1440,
+   "h": 1260,
+   "title": "8. Import",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Synchro.dc.html": {
+   "x": 3040,
+   "y": 3440,
+   "w": 1440,
+   "h": 1180,
+   "title": "9. Synchronisation",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Baselines.dc.html": {
+   "x": 0,
+   "y": 5060,
+   "w": 1440,
+   "h": 1080,
+   "title": "10. Baselines",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Administration.dc.html": {
+   "x": 1520,
+   "y": 5060,
+   "w": 1440,
+   "h": 1180,
+   "title": "11. Administration",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Discussions.dc.html": {
+   "x": 3040,
+   "y": 5060,
+   "w": 1440,
+   "h": 1120,
+   "title": "12. Discussions",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Mobile-Tableau.dc.html": {
+   "x": 0,
+   "y": 6660,
+   "w": 390,
+   "h": 844,
+   "title": "Téléphone · tableau de bord",
+   "is_interactive": true
+  },
+  "Mobile-Exigence.dc.html": {
+   "x": 470,
+   "y": 6660,
+   "w": 390,
+   "h": 844,
+   "title": "Téléphone · panneau d’une exigence",
+   "is_interactive": true
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "Document.dc.html",
+  "Panneau.dc.html",
+  "Explorateur.dc.html",
+  "Matrice.dc.html",
+  "Resultats.dc.html",
+  "Anomalies.dc.html",
+  "Import.dc.html",
+  "Synchro.dc.html",
+  "Baselines.dc.html",
+  "Administration.dc.html",
+  "Discussions.dc.html",
+  "Mobile-Tableau.dc.html",
+  "Mobile-Exigence.dc.html"
+ ],
+ "notes": {
+  "desk": {
+   "x": 0,
+   "y": -300,
+   "text": "Poste de travail : les douze vues",
+   "kind": "title1",
+   "maxW": 4400
+  },
+  "phone": {
+   "x": 0,
+   "y": 6360,
+   "text": "Téléphone",
+   "kind": "title1",
+   "maxW": 860
+  }
+ },
+ "designSystems": [
+  {
+   "title": "Trace",
+   "namespace": "trace",
+   "artifact": "https://claude.ai/artifact/WYKNughhFqUvRpwc1HURFo",
+   "version": null,
+   "copiedAt": "2026-10-07T19:57:55Z"
+  }
+ ]
+}

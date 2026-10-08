@@ -1,0 +1,61 @@
+/* Trace — généré depuis tokens.json par outils/generer_tokens_css.py. Ne pas modifier à la main. */
+@import "./fonts/fonts.css";
+
+:root {
+  --paper: #FAFAF7;
+  --sheet: #FFFFFF;
+  --req: #F2F4F8;
+  --rule: #DEDFD8;
+  --ink: #1C2230;
+  --ink-muted: #5E6675;
+  --accent: #2F4FB5;
+  --on-accent: #FFFFFF;
+  --ok: #2F7D55;
+  --danger: #B3261E;
+  --gap: #94600A;
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-margin: 120px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #14171D;
+    --sheet: #1A1E26;
+    --req: #222838;
+    --rule: #2C313B;
+    --ink: #E6E8EE;
+    --ink-muted: #9AA1AE;
+    --accent: #8EA4F2;
+    --on-accent: #14171D;
+    --ok: #5CC28C;
+    --danger: #F08A80;
+    --gap: #E3A845;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #14171D;
+  --sheet: #1A1E26;
+  --req: #222838;
+  --rule: #2C313B;
+  --ink: #E6E8EE;
+  --ink-muted: #9AA1AE;
+  --accent: #8EA4F2;
+  --on-accent: #14171D;
+  --ok: #5CC28C;
+  --danger: #F08A80;
+  --gap: #E3A845;
+}
+.t-title { font-family: var(--font-sans); font-size: 27px; line-height: 32px; font-weight: 600; }
+.t-heading { font-family: var(--font-sans); font-size: 18px; line-height: 24px; font-weight: 600; }
+.t-body-ui { font-family: var(--font-sans); font-size: 15px; line-height: 22px; font-weight: 400; }
+.t-label { font-family: var(--font-sans); font-size: 13px; line-height: 18px; font-weight: 500; }
+.t-req-id { font-family: var(--font-sans); font-size: 14px; line-height: 18px; font-weight: 600; }
+.t-caption { font-family: var(--font-sans); font-size: 12px; line-height: 16px; font-weight: 400; }
+.t-prose { font-family: var(--font-serif); font-size: 17px; line-height: 28px; font-weight: 400; }
